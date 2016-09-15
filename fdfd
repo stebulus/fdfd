@@ -1,2 +1,35 @@
 #!@bash@/bin/bash
-echo @redland@
+set -euo pipefail
+me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
+
+FDFD_DATA=tag:amotlpaa.org,2016:fdfd-data/
+XS=http://www.w3.org/2001/XMLSchema#
+DC=http://purl.org/dc/terms/
+
+rdf() {
+    @redland@/bin/rdfproc -s sqlite "$datadir"/db "$@"
+}
+
+command_new() {
+    local now
+    now=$(@coreutils@/bin/date -Is)
+    @coreutils@/bin/mkdir -p "$datadir"
+    rdf --new add-typed \
+        "$FDFD_DATA"db \
+        "$DC"created \
+        "$now" \
+        "" \
+        "$XS"dateTime \
+        "$FDFD_DATA"db
+}
+
+usage() {
+    echo "usage: $me DATADIR COMMAND [ARG ...]" >&2
+    exit 1
+}
+
+if [ $# -lt 2 ]; then usage; fi
+datadir=$1
+command=$2
+shift 2
+"command_$command" "$@"

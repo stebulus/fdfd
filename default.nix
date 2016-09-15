@@ -1,5 +1,6 @@
 let nixpkgs = import <nixpkgs> {};
 in { bash ? nixpkgs.bash
+   , coreutils ? nixpkgs.coreutils
    , redland ? nixpkgs.redland
    , stdenv ? nixpkgs.stdenv
    }:
@@ -7,6 +8,7 @@ in { bash ? nixpkgs.bash
      name = "fdfd-0.1.0";
      src = ./.;
      inherit bash
+             coreutils
              redland;
      scripts = [ "fdfd" ];
      builder = builtins.toFile "builder.sh"
