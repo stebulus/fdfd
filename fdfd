@@ -20,20 +20,6 @@ rdf() {
     @redland@/bin/rdfproc -s sqlite "$datadir"/db "$@"
 }
 
-command_new() {
-    if [ $# -ne 0 ]; then exit_usage "new"; fi
-    local now
-    now=$(@coreutils@/bin/date -Is)
-    @coreutils@/bin/mkdir -p "$datadir"
-    rdf --new add-typed \
-        "$FDFD_DATA"db \
-        "$DC"created \
-        "$now" \
-        "" \
-        "$XS"dateTime \
-        "$FDFD_DATA"db
-}
-
 command_add() {
     local uri
     case $# in
@@ -57,6 +43,20 @@ command_dump() {
     if [ $# -ne 0 ]; then exit_usage dump; fi
     rdf serialize ntriples |
     @sed@/bin/sed -e 's,^\(<[^>]*>\) \(<[^>]*>\) \(.*\) \.$,\1\t\2\t\3\t.,;t end;Q 1;:end'
+}
+
+command_new() {
+    if [ $# -ne 0 ]; then exit_usage "new"; fi
+    local now
+    now=$(@coreutils@/bin/date -Is)
+    @coreutils@/bin/mkdir -p "$datadir"
+    rdf --new add-typed \
+        "$FDFD_DATA"db \
+        "$DC"created \
+        "$now" \
+        "" \
+        "$XS"dateTime \
+        "$FDFD_DATA"db
 }
 
 exit_usage() {
