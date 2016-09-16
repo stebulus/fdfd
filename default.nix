@@ -1,7 +1,9 @@
 let nixpkgs = import <nixpkgs> {};
 in { bash ? nixpkgs.bash
    , coreutils ? nixpkgs.coreutils
+   , grep ? nixpkgs.gnugrep
    , redland ? nixpkgs.redland
+   , sed ? nixpkgs.gnused
    , stdenv ? nixpkgs.stdenv
    }:
    stdenv.mkDerivation {
@@ -9,7 +11,9 @@ in { bash ? nixpkgs.bash
      src = ./.;
      inherit bash
              coreutils
-             redland;
+             grep
+             redland
+             sed;
      scripts = [ "fdfd" ];
      builder = builtins.toFile "builder.sh"
        ''

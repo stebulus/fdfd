@@ -6,6 +6,16 @@ FDFD_DATA=tag:amotlpaa.org,2016:fdfd-data/
 XS=http://www.w3.org/2001/XMLSchema#
 DC=http://purl.org/dc/terms/
 
+cleanup() { if [ -v tmp ]; then rm -rf "$tmp"; fi }
+trap cleanup EXIT
+
+require_tmp() {
+    declare -g tmp
+    if [ ! -v tmp ]; then
+        tmp=$(@coreutils@/bin/mktemp --directory --tmpdir "$me".XXXXXXXX)
+    fi
+}
+
 rdf() {
     @redland@/bin/rdfproc -s sqlite "$datadir"/db "$@"
 }
@@ -24,13 +34,44 @@ command_new() {
         "$FDFD_DATA"db
 }
 
-exit_usage() {
-    local msg
+command_add() {
+    local uri
     case $# in
-        0) msg="COMMAND [ARG ...]" ;;
-        *) msg="$@" ;;
+        0)  command_add -
+            ;;
+        *)  for uri in "$@"; do
+                case "$uri" in
+                    -)  require_tmp
+                        cat > "$tmp"/triples-to-add
+                        command_add "$tmp"/triples-to-add
+                        ;;
+                    *)  rdf parse-stream "$uri" ntriples
+                        ;;
+                esac
+            done
+            ;;
     esac
-    echo "usage: $me DATADIR $msg" >&2
+}
+
+command_dump() {
+    if [ $# -ne 0 ]; then exit_usage dump; fi
+    rdf serialize ntriples |
+    @sed@/bin/sed -e 's,^\(<[^>]*>\) \(<[^>]*>\) \(.*\) \.$,\1\t\2\t\3\t.,;t end;Q 1;:end'
+}
+
+exit_usage() {
+    local base
+    base="usage: $me DATADIR"
+    case $# in
+        0)  echo "$base COMMAND [ARG ...]" >&2
+            echo "where COMMAND is one of" >&2
+            declare -F |
+            @grep@/bin/grep '^declare -f command_' |
+            @sed@/bin/sed 's,^declare -f command_,    ,' >&2
+            ;;
+        *)  echo "$base $@" >&2
+            ;;
+    esac
     exit 1
 }
 
