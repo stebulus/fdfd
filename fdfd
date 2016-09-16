@@ -2,9 +2,13 @@
 set -euo pipefail
 me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
 
-FDFD_DATA=tag:amotlpaa.org,2016:fdfd-data/
-XS=http://www.w3.org/2001/XMLSchema#
+AMFD=tag:amotlpaa.org,2016:fdfd/
 DC=http://purl.org/dc/terms/
+FDFD_DATA=tag:amotlpaa.org,2016:fdfd-data/
+RDF=http://www.w3.org/1999/02/22-rdf-syntax-ns#
+XS=http://www.w3.org/2001/XMLSchema#
+
+TAB=$'\t'
 
 cleanup() { if [ -v tmp ]; then rm -rf "$tmp"; fi }
 trap cleanup EXIT
@@ -45,6 +49,31 @@ command_dump() {
     @sed@/bin/sed -e 's,^\(<[^>]*>\) \(<[^>]*>\) \(.*\) \.$,\1\t\2\t\3\t.,;t end;Q 1;:end'
 }
 
+command_fetch() {
+    if [ $# -lt 1 ]; then exit_usage "fetch URL [URL ...]"; fi
+    local url fetchbase fetchdir fetchdiruri now
+    for url in "$@"; do
+        fetchbase=$(new_data_subdir)
+        fetchdir=$datadir/$fetchbase
+        fetchdiruri=$FDFD_DATA$fetchbase
+        fact "<$fetchdiruri>" "<${RDF}type>" "<${AMFD}fetch>" >>"$fetchdir"/facts
+        fact "<$fetchdiruri>" "<${AMFD}fetch-url>" "<$url>" >>"$fetchdir"/facts
+        now=$(timestamp)
+        fact "<$fetchdiruri>" "<${AMFD}when-start>" "$now" >>"$fetchdir"/facts
+        @curl@/bin/curl \
+            --compressed \
+            --dump-header "$fetchdir"/headers \
+            --location \
+            --output "$fetchdir"/entity \
+            --show-error \
+            --silent \
+            "$url"
+        now=$(timestamp)
+        fact "<$fetchdiruri>" "<${AMFD}when-end>" "$now" >>"$fetchdir"/facts
+        echo $fetchdir
+    done
+}
+
 command_new() {
     if [ $# -ne 0 ]; then exit_usage "new"; fi
     local now
@@ -57,6 +86,25 @@ command_new() {
         "" \
         "$XS"dateTime \
         "$FDFD_DATA"db
+}
+
+fact() {
+    echo "$1$TAB$2$TAB$3$TAB."
+}
+
+new_data_subdir() {
+    local chars d
+    chars=$(@coreutils@/bin/dd if=/dev/urandom count=20 bs=1 2>/dev/null |
+        @coreutils@/bin/base32 |
+        @coreutils@/bin/tr A-Z a-z)
+    mkdir -p "$datadir/$chars"
+    echo "$chars"
+}
+
+timestamp() {
+    local now
+    now=$(date -Ins)
+    echo "\"$now\"^^<${XS}dateTime>"
 }
 
 exit_usage() {
