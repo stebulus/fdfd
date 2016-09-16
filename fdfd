@@ -2,13 +2,9 @@
 set -euo pipefail
 me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
 
-AMFD=tag:amotlpaa.org,2016:fdfd/
 DC=http://purl.org/dc/terms/
 FDFD_DATA=tag:amotlpaa.org,2016:fdfd-data/
-RDF=http://www.w3.org/1999/02/22-rdf-syntax-ns#
 XS=http://www.w3.org/2001/XMLSchema#
-
-TAB=$'\t'
 
 cleanup() { if [ -v tmp ]; then rm -rf "$tmp"; fi }
 trap cleanup EXIT
@@ -56,10 +52,14 @@ command_fetch() {
         fetchbase=$(new_data_subdir)
         fetchdir=$datadir/$fetchbase
         fetchdiruri=$FDFD_DATA$fetchbase
-        fact "<$fetchdiruri>" "<${RDF}type>" "<${AMFD}fetch>" >>"$fetchdir"/facts
-        fact "<$fetchdiruri>" "<${AMFD}fetch-url>" "<$url>" >>"$fetchdir"/facts
-        now=$(timestamp)
-        fact "<$fetchdiruri>" "<${AMFD}when-start>" "$now" >>"$fetchdir"/facts
+        {
+            turtle_preamble
+            echo "<.> rdf:type amfd:fetch"
+            echo "  ; amfd:fetch-url <$url>"
+            now=$(timestamp)
+            echo "  ; amfd:when-start $now"
+            echo "  ."
+        } >"$fetchdir"/facts.ttl
         @curl@/bin/curl \
             --compressed \
             --dump-header "$fetchdir"/headers \
@@ -69,7 +69,7 @@ command_fetch() {
             --silent \
             "$url"
         now=$(timestamp)
-        fact "<$fetchdiruri>" "<${AMFD}when-end>" "$now" >>"$fetchdir"/facts
+        echo "<.> amfd:when-end $now ." >>"$fetchdir"/facts.ttl
         echo $fetchdir
     done
 }
@@ -88,10 +88,6 @@ command_new() {
         "$FDFD_DATA"db
 }
 
-fact() {
-    echo "$1$TAB$2$TAB$3$TAB."
-}
-
 new_data_subdir() {
     local chars d
     chars=$(@coreutils@/bin/dd if=/dev/urandom count=20 bs=1 2>/dev/null |
@@ -105,6 +101,13 @@ timestamp() {
     local now
     now=$(date -Ins)
     echo "\"$now\"^^<${XS}dateTime>"
+}
+
+turtle_preamble() {
+    echo "@prefix amfd: <tag:amotlpaa.org,2016:fdfd/> ."
+    echo "@prefix dc: <http://purl.org/dc/terms/> ."
+    echo "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> ."
+    echo "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> ."
 }
 
 exit_usage() {
