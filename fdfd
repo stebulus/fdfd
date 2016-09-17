@@ -18,7 +18,7 @@ require_tmp() {
 }
 
 rdf() {
-    @redland@/bin/rdfproc -s sqlite "$datadir"/db "$@"
+    @redland@/bin/rdfproc --quiet -s sqlite "$datadir"/db "$@"
 }
 
 command_add() {
