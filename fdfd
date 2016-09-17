@@ -188,6 +188,7 @@ extract_rss() {
                     else
                         subject = "[]"
                     print subject " rdf:type amfd:item"
+                    print "  ; dc:source <.>"
                     if ("title" in a)
                         print "  ; dc:title " rdfstr(a["title"])
                     if ("pubDate" in a)
