@@ -85,13 +85,28 @@ expect_some_lines() {
 extract_atom() {
     for f in "$@"; do
         itemsdir=$(xml_pieces /feed/entry "$f")
-        for f in "$itemsdir"/*; do
+        for g in "$itemsdir"/*; do
+            linksdir=$(xml_pieces link "$g")
+            for h in "$linksdir"/*; do
+                @awk@/bin/awk '
+                    BEGIN { a["rel"] = "alternate" }
+                    /^link\/@/ {
+                        i = index($0, "@")
+                        j = index($0, "=")
+                        a[substr($0, i+1, j-1)] = substr($0, j+1)
+                    }
+                    END {
+                        if (a["rel"] == "alternate" && "href" in a)
+                            print "properlink=" a["href"]
+                    }
+                    ' "$h"
+            done >>"$g"
             @awk@/bin/awk -f "$here"/../lib/items.awk --source '
                 $1 == "title" { stash("title") }
-                $1 == "link/@href" { stash("link") }
+                $1 == "properlink" { stash("link") }
                 $1 == "id" { stash("id") }
                 $1 == "updated" { stash("date") }
-                ' "$f"
+                ' "$g"
         done
     done |
     expect_some_lines "extract_atom: no items found"
