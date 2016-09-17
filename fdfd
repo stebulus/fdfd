@@ -47,7 +47,7 @@ command_dump() {
 
 command_fetch() {
     if [ $# -lt 1 ]; then exit_usage "fetch URL [URL ...]"; fi
-    local url fetchbase fetchdir fetchdiruri now
+    local url fetchbase fetchdir fetchdiruri got_items now
     for url in "$@"; do
         fetchbase=$(new_data_subdir)
         fetchdir=$datadir/$fetchbase
@@ -68,9 +68,30 @@ command_fetch() {
             --show-error \
             --silent \
             "$url"
-        extract_rss "$fetchdir"/entity >>"$fetchdir"/facts.ttl 2>/dev/null || true
-        now=$(timestamp)
-        echo "<.> amfd:when-end $now ." >>"$fetchdir"/facts.ttl
+        got_items=no
+        for fmt in rss atom; do
+            if extract_"$fmt" "$fetchdir"/entity >>"$fetchdir"/facts.ttl; then
+                got_items=yes
+                break
+            fi
+        done
+        {
+            case "$got_items" in
+                yes) echo "<.> amfd:success \"true\"^^xsd:boolean"
+                    ;;
+                no) echo "<.> amfd:success \"false\"^^xsd:boolean"
+                    echo "  ; amfd:failure-msg \"no items found\""
+                    ;;
+                *)  msg="internal error: got_items = $got_items"
+                    echo "$me: $msg" >&2
+                    echo "<.> amfd:success \"false\"^^xsd:boolean"
+                    echo "  ; amfd:failure-msg \"$msg\""
+                    ;;
+            esac
+            now=$(timestamp)
+            echo "  ; amfd:when-end $now"
+            echo "  ."
+        } >>"$fetchdir"/facts.ttl
         echo $fetchdir
     done
 }
@@ -87,6 +108,122 @@ command_new() {
         "" \
         "$XS"dateTime \
         "$FDFD_DATA"db
+}
+
+extract_atom() {
+    require_tmp
+    @coreutils@/bin/rm -rf "$tmp"/extract-atom
+    @coreutils@/bin/mkdir "$tmp"/extract-atom
+    @coreutils@/bin/cat "$@" |
+    @xml2@/bin/xml2 |
+    @coreutils@/bin/csplit \
+        --prefix "$tmp"/extract-atom/ \
+        - \
+        '/^\/feed\/entry$/' '{*}' \
+        >/dev/null
+    for f in "$tmp"/extract-atom/*; do
+        @sed@/bin/sed -n '/^\/feed\/entry\//p' "$f" |
+        @coreutils@/bin/cut -c13- |
+        @awk@/bin/awk -F= '
+            function rdfstr(s) {
+                gsub(/\\/, "\\\\", s)
+                gsub(/\t/, "\\t", s)
+                gsub(/\b/, "\\b", s)
+                gsub(/\n/, "\\n", s)
+                gsub(/\r/, "\\r", s)
+                gsub(/\f/, "\\f", s)
+                gsub(/"/, "\\\"", s)
+                return "\"" s "\""
+            }
+            function rdfuri(s) {
+                gsub(/\\/, "\\u005C", s)
+                gsub("\x00", "\\u0000", s)
+                gsub("\x01", "\\u0001", s)
+                gsub("\x02", "\\u0002", s)
+                gsub("\x03", "\\u0003", s)
+                gsub("\x04", "\\u0004", s)
+                gsub("\x05", "\\u0005", s)
+                gsub("\x06", "\\u0006", s)
+                gsub("\x07", "\\u0007", s)
+                gsub("\x08", "\\u0008", s)
+                gsub("\x09", "\\u0009", s)
+                gsub("\x0a", "\\u000A", s)
+                gsub("\x0b", "\\u000B", s)
+                gsub("\x0c", "\\u000C", s)
+                gsub("\x0d", "\\u000D", s)
+                gsub("\x0e", "\\u000E", s)
+                gsub("\x0f", "\\u000F", s)
+                gsub("\x10", "\\u0010", s)
+                gsub("\x11", "\\u0011", s)
+                gsub("\x12", "\\u0012", s)
+                gsub("\x13", "\\u0013", s)
+                gsub("\x14", "\\u0014", s)
+                gsub("\x15", "\\u0015", s)
+                gsub("\x16", "\\u0016", s)
+                gsub("\x17", "\\u0017", s)
+                gsub("\x18", "\\u0018", s)
+                gsub("\x19", "\\u0019", s)
+                gsub("\x1a", "\\u001A", s)
+                gsub("\x1b", "\\u001B", s)
+                gsub("\x1c", "\\u001C", s)
+                gsub("\x1d", "\\u001D", s)
+                gsub("\x1e", "\\u001E", s)
+                gsub("\x1f", "\\u001F", s)
+                gsub("\x20", "\\u0020", s)
+                gsub(/"/, "\\u0022", s)
+                gsub(/</, "\\u003C", s)
+                gsub(/>/, "\\u003E", s)
+                gsub(/\^/, "\\u005E", s)
+                gsub(/`/, "\\u0060", s)
+                gsub(/{/, "\\u007B", s)
+                gsub(/\|/, "\\u007C", s)
+                gsub(/}/, "\\u007D", s)
+                return "<" s ">"
+            }
+            function stash() {
+                i = index($0, "=")
+                if (i != 0) {
+                    v = substr($0, i+1)
+                    if ($1 in a)
+                        a[$1] = a[$1] "\n" v
+                    else
+                        a[$1] = v
+                    stashed = 1
+                }
+            }
+            BEGIN { stashed = 0 }
+            $1 == "title" { stash() }
+            $1 == "link/@href" { stash() }
+            $1 == "id" { stash() }
+            $1 == "updated" { stash() }
+            END {
+                if (stashed) {
+                    if ("id" in a)
+                        subject = rdfuri(a["id"])
+                    else
+                        subject = "[]"
+                    print subject " rdf:type amfd:item"
+                    print "  ; dc:source <.>"
+                    if ("title" in a)
+                        print "  ; dc:title " rdfstr(a["title"])
+                    if ("updated" in a)
+                        print "  ; dc:date " rdfstr(a["updated"]) "^^xsd:dateTime"
+                    if ("link/@href" in a)
+                        print "  ; amfd:link " rdfuri(a["link/@href"])
+                    print "  ."
+                }
+            }
+            '
+    done |
+    @awk@/bin/awk '
+        { print }
+        END {
+            if (NR == 0) {
+                print "extract_atom: no items found" >"/dev/stderr"
+                exit 1
+            }
+        }
+        '
 }
 
 extract_rss() {
