@@ -64,11 +64,13 @@ function stash(k) {
     i = index($0, "=")
     if (i != 0) {
         v = substr($0, i+1)
-        if (k in item)
-            item[k] = item[k] "\n" v
-        else
-            item[k] = v
-        stashed = 1
+        if (v != "") {
+            if (k in item)
+                item[k] = item[k] "\n" v
+            else
+                item[k] = v
+            stashed = 1
+        }
     }
 }
 
