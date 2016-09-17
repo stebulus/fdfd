@@ -29,5 +29,7 @@ in { awk ? nixpkgs.gawk
          substituteAll "$src/$f" "$out/bin/$f"
          chmod +x "$out/bin/$f"
        done
+       mkdir -p "$out/lib"
+       cp "$src"/lib/* "$out/lib"
        '';
    }
