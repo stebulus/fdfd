@@ -1,21 +1,25 @@
 let nixpkgs = import <nixpkgs> {};
-in { bash ? nixpkgs.bash
+in { awk ? nixpkgs.gawk
+   , bash ? nixpkgs.bash
    , coreutils ? nixpkgs.coreutils
    , curl ? nixpkgs.curl.bin
    , grep ? nixpkgs.gnugrep
    , redland ? nixpkgs.redland
    , sed ? nixpkgs.gnused
    , stdenv ? nixpkgs.stdenv
+   , xml2 ? nixpkgs.xml2
    }:
    stdenv.mkDerivation {
      name = "fdfd-0.1.0";
      src = ./.;
-     inherit bash
+     inherit awk
+             bash
              coreutils
              curl
              grep
              redland
-             sed;
+             sed
+             xml2;
      scripts = [ "fdfd" ];
      builder = builtins.toFile "builder.sh"
        ''
