@@ -100,7 +100,7 @@ extract_rss() {
         '/^\/rss\/channel\/item$/' '{*}' \
         >/dev/null
     for f in "$tmp"/extract-rss/*; do
-        @grep@/bin/grep '^/rss/channel/item/' "$f" |
+        @sed@/bin/sed -n '/^\/rss\/channel\/item\//p' "$f" |
         @coreutils@/bin/cut -c19- |
         while IFS='=' read k v; do
             case "$k" in
@@ -199,7 +199,16 @@ extract_rss() {
                 }
             }
             '
-    done
+    done |
+    @awk@/bin/awk '
+        { print }
+        END {
+            if (NR == 0) {
+                print "extract_rss: no items found" >"/dev/stderr"
+                exit 1
+            }
+        }
+        '
 }
 
 new_data_subdir() {
