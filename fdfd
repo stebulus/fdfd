@@ -119,17 +119,15 @@ command_new() {
 }
 
 extract_atom() {
-    require_tmp
-    @coreutils@/bin/rm -rf "$tmp"/extract-atom
-    @coreutils@/bin/mkdir "$tmp"/extract-atom
+    itemsdir=$(subtmpdir)
     @coreutils@/bin/cat "$@" |
     @xml2@/bin/xml2 |
     @coreutils@/bin/csplit \
-        --prefix "$tmp"/extract-atom/ \
+        --prefix "$itemsdir"/ \
         - \
         '/^\/feed\/entry$/' '{*}' \
         >/dev/null
-    for f in "$tmp"/extract-atom/*; do
+    for f in "$itemsdir"/*; do
         @sed@/bin/sed -n '/^\/feed\/entry\//p' "$f" |
         @coreutils@/bin/cut -c13- |
         @awk@/bin/awk -F= '
@@ -235,17 +233,16 @@ extract_atom() {
 }
 
 extract_rss() {
-    require_tmp
-    @coreutils@/bin/rm -rf "$tmp"/extract-rss
-    @coreutils@/bin/mkdir "$tmp"/extract-rss
+    local itemsdir
+    itemsdir=$(subtmpdir)
     @coreutils@/bin/cat "$@" |
     @xml2@/bin/xml2 |
     @coreutils@/bin/csplit \
-        --prefix "$tmp"/extract-rss/ \
+        --prefix "$itemsdir"/ \
         - \
         '/^\/rss\/channel\/item$/' '{*}' \
         >/dev/null
-    for f in "$tmp"/extract-rss/*; do
+    for f in "$itemsdir"/*; do
         @sed@/bin/sed -n '/^\/rss\/channel\/item\//p' "$f" |
         @coreutils@/bin/cut -c19- |
         while IFS='=' read k v; do
@@ -359,11 +356,23 @@ extract_rss() {
 
 new_data_subdir() {
     local chars d
-    chars=$(@coreutils@/bin/dd if=/dev/urandom count=20 bs=1 2>/dev/null |
-        @coreutils@/bin/base32 |
-        @coreutils@/bin/tr A-Z a-z)
+    chars=$(nonce 20)
     mkdir -p "$datadir/$chars"
     echo "$chars"
+}
+
+nonce() {
+    @coreutils@/bin/dd if=/dev/urandom count="$1" bs=1 2>/dev/null |
+    @coreutils@/bin/base32 |
+    @coreutils@/bin/tr A-Z a-z
+}
+
+subtmpdir() {
+    local name
+    name=$(nonce 5)
+    require_tmp
+    mkdir "$tmp/$name"
+    echo "$tmp/$name"
 }
 
 timestamp() {
