@@ -61,7 +61,7 @@ command_fetch() {
         fetchbase=$(new_data_subdir)
         fetchdir=$datadir/$fetchbase
         {
-            turtle_preamble
+            preamble_turtle
             echo "<.> rdf:type amfd:fetch ;"
             echo "  amfd:fetch-url <$url> ;"
             now=$(timestamp)
@@ -181,6 +181,21 @@ nonce() {
     @coreutils@/bin/tr A-Z a-z
 }
 
+preamble_raw() {
+    echo "amfd: <tag:amotlpaa.org,2016:fdfd/>"
+    echo "dc: <http://purl.org/dc/terms/>"
+    echo "rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>"
+    echo "xsd: <http://www.w3.org/2001/XMLSchema#>"
+}
+
+preamble_sparql() {
+    preamble_raw | @sed@/bin/sed 's,^,PREFIX ,'
+}
+
+preamble_turtle() {
+    preamble_raw | @sed@/bin/sed 's,.*,@prefix & .,'
+}
+
 subtmpdir() {
     local name
     name=$(nonce 5)
@@ -193,13 +208,6 @@ timestamp() {
     local now
     now=$(date -Ins)
     echo "\"$now\"^^<${XS}dateTime>"
-}
-
-turtle_preamble() {
-    echo "@prefix amfd: <tag:amotlpaa.org,2016:fdfd/> ."
-    echo "@prefix dc: <http://purl.org/dc/terms/> ."
-    echo "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> ."
-    echo "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> ."
 }
 
 xml_pieces() {
