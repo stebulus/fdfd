@@ -4,7 +4,7 @@ in { awk ? nixpkgs.gawk
    , coreutils ? nixpkgs.coreutils
    , curl ? nixpkgs.curl.bin
    , grep ? nixpkgs.gnugrep
-   , redland ? nixpkgs.redland
+   , jena ? nixpkgs.apache-jena
    , sed ? nixpkgs.gnused
    , stdenv ? nixpkgs.stdenv
    , xml2 ? nixpkgs.xml2
@@ -17,7 +17,7 @@ in { awk ? nixpkgs.gawk
              coreutils
              curl
              grep
-             redland
+             jena
              sed
              xml2;
      scripts = [ "fdfd" ];
