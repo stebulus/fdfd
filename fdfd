@@ -79,7 +79,7 @@ command_fetch() {
             "$url"
         got_items=no
         for fmt in rss atom; do
-            if extract_"$fmt" "$fetchdir"/entity >>"$fetchdir"/facts.ttl; then
+            if extract_"$fmt" "$fetchdir"/entity >>"$fetchdir"/facts.ttl 2>/dev/null; then
                 got_items=yes
                 break
             fi
