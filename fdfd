@@ -45,6 +45,14 @@ command_dump() {
     @sed@/bin/sed -e 's,^\(<[^>]*>\) \(<[^>]*>\) \(.*\) \.$,\1\t\2\t\3\t.,;t end;Q 1;:end'
 }
 
+command_extract_atom() {
+    extract_atom "$@"
+}
+
+command_extract_rss() {
+    extract_rss "$@"
+}
+
 command_fetch() {
     if [ $# -lt 1 ]; then exit_usage "fetch URL [URL ...]"; fi
     local url fetchbase fetchdir fetchdiruri got_items now
@@ -379,7 +387,8 @@ exit_usage() {
             echo "where COMMAND is one of" >&2
             declare -F |
             @grep@/bin/grep '^declare -f command_' |
-            @sed@/bin/sed 's,^declare -f command_,    ,' >&2
+            @sed@/bin/sed -e 's,^declare -f command_,    ,' \
+                -e 's/_/-/g' >&2
             ;;
         *)  echo "$base $@" >&2
             ;;
@@ -389,6 +398,6 @@ exit_usage() {
 
 if [ $# -lt 2 ]; then exit_usage; fi
 datadir=$1
-command=$2
+command=$(echo "$2" | tr - _)
 shift 2
 "command_$command" "$@"
