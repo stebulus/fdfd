@@ -98,6 +98,7 @@ command_fetch() {
             now=$(timestamp)
             echo "  amfd:when-end $now ."
         } >>"$fetchdir"/facts.ttl
+        rdf parse "$fetchdir"/facts.ttl turtle
         echo $fetchdir
     done
 }
