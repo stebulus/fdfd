@@ -119,6 +119,20 @@ command_new() {
         "$FDFD_DATA"db
 }
 
+expect_some_lines() {
+    local msg
+    msg=$(echo "$@")
+    @awk@/bin/awk -v msg="$msg" '
+        { print }
+        END {
+            if (NR == 0) {
+                print msg >"/dev/stderr"
+                exit 1
+            }
+        }
+        '
+}
+
 extract_atom() {
     for f in "$@"; do
         itemsdir=$(xml_pieces /feed/entry "$f")
@@ -131,15 +145,7 @@ extract_atom() {
                 ' "$f"
         done
     done |
-    @awk@/bin/awk '
-        { print }
-        END {
-            if (NR == 0) {
-                print "extract_atom: no items found" >"/dev/stderr"
-                exit 1
-            }
-        }
-        '
+    expect_some_lines "extract_atom: no items found"
 }
 
 extract_rss() {
@@ -162,15 +168,7 @@ extract_rss() {
                 '
         done
     done |
-    @awk@/bin/awk '
-        { print }
-        END {
-            if (NR == 0) {
-                print "extract_rss: no items found" >"/dev/stderr"
-                exit 1
-            }
-        }
-        '
+    expect_some_lines "extract_rss: no items found"
 }
 
 new_data_subdir() {
