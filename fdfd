@@ -106,7 +106,7 @@ command_fetch() {
 command_new() {
     if [ $# -ne 0 ]; then exit_usage "new"; fi
     local now
-    now=$(@coreutils@/bin/date -Is)
+    now=$(xsd_date)
     @coreutils@/bin/mkdir -p "$datadir"
     rdf --new add-typed \
         "$FDFD_DATA"db \
@@ -153,7 +153,7 @@ extract_rss() {
             cat "$f" |
             while IFS='=' read k v; do
                 case "$k" in
-                    pubDate) v=$(@coreutils@/bin/date -Is --date="$v") ;;
+                    pubDate) v=$(xsd_date --date="$v") ;;
                     *) ;;
                 esac
                 echo "$k=$v"
@@ -207,7 +207,7 @@ subtmpdir() {
 
 timestamp() {
     local now
-    now=$(date -Ins)
+    now=$(xsd_date)
     echo "\"$now\"^^<${XS}dateTime>"
 }
 
@@ -231,6 +231,10 @@ xml_pieces() {
             "$f"
     done
     echo "$itemsdir"
+}
+
+xsd_date() {
+    @coreutils@/bin/date +%FT%T.%N%:z "$@"
 }
 
 exit_usage() {
