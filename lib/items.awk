@@ -78,14 +78,13 @@ END {
             subject = rdfuri(item["id"])
         else
             subject = "[]"
-        print subject " rdf:type amfd:item"
-        print "  ; dc:source <.>"
+        print subject " rdf:type amfd:item ;"
         if ("title" in item)
-            print "  ; dc:title " rdfstr(item["title"])
+            print "  dc:title " rdfstr(item["title"]) " ;"
         if ("date" in item)
-            print "  ; dc:date " rdfstr(item["date"]) "^^xsd:dateTime"
+            print "  dc:date " rdfstr(item["date"]) "^^xsd:dateTime ;"
         if ("link" in item)
-            print "  ; amfd:link " rdfuri(item["link"])
-        print "  ."
+            print "  amfd:link " rdfuri(item["link"]) " ;"
+        print "  dc:source <.> ."
     }
 }

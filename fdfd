@@ -63,11 +63,10 @@ command_fetch() {
         fetchdiruri=$FDFD_DATA$fetchbase
         {
             turtle_preamble
-            echo "<.> rdf:type amfd:fetch"
-            echo "  ; amfd:fetch-url <$url>"
+            echo "<.> rdf:type amfd:fetch ;"
+            echo "  amfd:fetch-url <$url> ;"
             now=$(timestamp)
-            echo "  ; amfd:when-start $now"
-            echo "  ."
+            echo "  amfd:when-start $now ."
         } >"$fetchdir"/facts.ttl
         @curl@/bin/curl \
             --compressed \
@@ -86,20 +85,19 @@ command_fetch() {
         done
         {
             case "$got_items" in
-                yes) echo "<.> amfd:success \"true\"^^xsd:boolean"
+                yes) echo "<.> amfd:success \"true\"^^xsd:boolean ;"
                     ;;
-                no) echo "<.> amfd:success \"false\"^^xsd:boolean"
-                    echo "  ; amfd:failure-msg \"no items found\""
+                no) echo "<.> amfd:success \"false\"^^xsd:boolean ;"
+                    echo "  amfd:failure-msg \"no items found\" ;"
                     ;;
                 *)  msg="internal error: got_items = $got_items"
                     echo "$me: $msg" >&2
-                    echo "<.> amfd:success \"false\"^^xsd:boolean"
-                    echo "  ; amfd:failure-msg \"$msg\""
+                    echo "<.> amfd:success \"false\"^^xsd:boolean ;"
+                    echo "  amfd:failure-msg \"$msg\" ;"
                     ;;
             esac
             now=$(timestamp)
-            echo "  ; amfd:when-end $now"
-            echo "  ."
+            echo "  amfd:when-end $now ."
         } >>"$fetchdir"/facts.ttl
         echo $fetchdir
     done
