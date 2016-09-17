@@ -32,23 +32,21 @@ command_fetch() {
             echo "  amfd:fetch-url <$url> ;"
             now=$(timestamp)
             echo "  amfd:when-start $now ."
-        } >"$fetchdir"/facts.ttl
-        @curl@/bin/curl \
-            --compressed \
-            --dump-header "$fetchdir"/headers \
-            --location \
-            --output "$fetchdir"/entity \
-            --show-error \
-            --silent \
-            "$url"
-        got_items=no
-        for fmt in rss atom; do
-            if extract_"$fmt" "$fetchdir"/entity >>"$fetchdir"/facts.ttl 2>/dev/null; then
-                got_items=yes
-                break
-            fi
-        done
-        {
+            @curl@/bin/curl \
+                --compressed \
+                --dump-header "$fetchdir"/headers \
+                --location \
+                --output "$fetchdir"/entity \
+                --show-error \
+                --silent \
+                "$url"
+            got_items=no
+            for fmt in rss atom; do
+                if extract_"$fmt" "$fetchdir"/entity 2>/dev/null; then
+                    got_items=yes
+                    break
+                fi
+            done
             case "$got_items" in
                 yes) echo "<.> amfd:success \"true\"^^xsd:boolean ;"
                     ;;
@@ -63,7 +61,7 @@ command_fetch() {
             esac
             now=$(timestamp)
             echo "  amfd:when-end $now ."
-        } >>"$fetchdir"/facts.ttl
+        } >"$fetchdir"/facts.ttl
         echo "$fetchdir"/facts.ttl
     done
 }
