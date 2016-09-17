@@ -184,7 +184,7 @@ extract_rss() {
             END {
                 if (stashed) {
                     if ("guid" in a)
-                        subject = "<" a["guid"] ">"
+                        subject = rdfuri(a["guid"])
                     else
                         subject = "[]"
                     print subject " rdf:type amfd:item"
