@@ -68,6 +68,7 @@ command_fetch() {
             --show-error \
             --silent \
             "$url"
+        extract_rss "$fetchdir"/entity >>"$fetchdir"/facts.ttl 2>/dev/null || true
         now=$(timestamp)
         echo "<.> amfd:when-end $now ." >>"$fetchdir"/facts.ttl
         echo $fetchdir
