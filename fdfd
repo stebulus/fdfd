@@ -51,6 +51,24 @@ command_fetch() {
     done
 }
 
+command_fetchable() {
+    if [ $# -ne 1 ]; then exit_usage "fetchable DBDIR"; fi
+    local fence
+    fence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "29 hours ago")
+    command_query "$1" "
+        SELECT ?url
+        WHERE {
+            ?url a amfd:feed .
+            OPTIONAL {
+                ?url ^amfd:fetch-url/amfd:when-end ?time .
+                FILTER (?time > \"$fence\"^^xsd:dateTime)
+            }
+            FILTER (!bound(?time))
+        }
+        " |
+    @jq@/bin/jq -r '.results.bindings | .[] | .url.value'
+}
+
 command_merge() {
     if [ $# -lt 1 ]; then exit_usage "merge DBDIR [FILE ...]"; fi
     local dbdir
