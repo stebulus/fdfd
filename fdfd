@@ -40,44 +40,13 @@ command_fetch() {
                 --show-error \
                 --silent \
                 "$url"
-            got_items=no
-            for fmt in rss atom; do
-                if extract_"$fmt" "$fetchdir"/entity 2>/dev/null; then
-                    got_items=yes
-                    break
-                fi
-            done
-            case "$got_items" in
-                yes) echo "<.> amfd:success \"true\"^^xsd:boolean ;"
-                    ;;
-                no) echo "<.> amfd:success \"false\"^^xsd:boolean ;"
-                    echo "  amfd:failure-msg \"no items found\" ;"
-                    ;;
-                *)  msg="internal error: got_items = $got_items"
-                    echo "$me: $msg" >&2
-                    echo "<.> amfd:success \"false\"^^xsd:boolean ;"
-                    echo "  amfd:failure-msg \"$msg\" ;"
-                    ;;
-            esac
+            extract_rss "$fetchdir"/entity
+            extract_atom "$fetchdir"/entity
             now=$(timestamp)
             echo "  amfd:when-end $now ."
         } >"$fetchdir"/facts.ttl
         echo "$fetchdir"/facts.ttl
     done
-}
-
-expect_some_lines() {
-    local msg
-    msg=$(echo "$@")
-    @awk@/bin/awk -v msg="$msg" '
-        { print }
-        END {
-            if (NR == 0) {
-                print msg >"/dev/stderr"
-                exit 1
-            }
-        }
-        '
 }
 
 extract_atom() {
@@ -106,8 +75,7 @@ extract_atom() {
                 $1 == "updated" { stash("date") }
                 ' "$g"
         done
-    done |
-    expect_some_lines "extract_atom: no items found"
+    done
 }
 
 extract_rss() {
@@ -129,8 +97,7 @@ extract_rss() {
                 $1 == "pubDate" { stash("date") }
                 '
         done
-    done |
-    expect_some_lines "extract_rss: no items found"
+    done
 }
 
 new_data_subdir() {
