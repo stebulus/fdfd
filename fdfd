@@ -69,6 +69,32 @@ command_merge() {
     done
 }
 
+command_unreviewed() {
+    if [ $# -ne 1 ]; then exit_usage "unreviewed DBDIR"; fi
+    local dbdir work
+    dbdir=$1
+    work=$(subtmpdir)
+    cat "$dbdir"/* >"$work"/all-facts.nt
+    {
+        preamble_sparql
+        cat <<EOF
+SELECT ?link ?title ?sourceurl ?date
+WHERE {
+    ?item a amfd:item ; amfd:link ?link .
+    OPTIONAL { ?item dc:title ?title }
+    OPTIONAL { ?item dc:source/amfd:fetch-url ?sourceurl }
+    OPTIONAL { ?item dc:date ?date }
+    OPTIONAL { ?item amfd:review ?review }
+    FILTER (!bound(?review))
+}
+EOF
+    } >"$work"/unreviewed.rq
+    @jena@/bin/sparql \
+        --results json \
+        --data "$work"/all-facts.nt \
+        --query "$work"/unreviewed.rq
+}
+
 extract_atom() {
     for f in "$@"; do
         itemsdir=$(xml_pieces /feed/entry "$f")
