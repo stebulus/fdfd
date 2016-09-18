@@ -93,7 +93,7 @@ command_unposted() {
         WHERE {
             ?item a amfd:item ;
                 amfd:link ?link ;
-                amfd:review/amfd:postable true .
+                amfd:review/amfd:worth-posting true .
             OPTIONAL { ?item dc:title ?title }
             OPTIONAL { ?item dc:source/amfd:fetch-url ?sourceurl }
             OPTIONAL { ?item dc:date ?date }
