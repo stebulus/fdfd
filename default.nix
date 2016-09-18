@@ -5,6 +5,7 @@ in { awk ? nixpkgs.gawk
    , curl ? nixpkgs.curl.bin
    , grep ? nixpkgs.gnugrep
    , jena ? nixpkgs.apache-jena
+   , jq ? nixpkgs.jq
    , sed ? nixpkgs.gnused
    , stdenv ? nixpkgs.stdenv
    , xml2 ? nixpkgs.xml2
@@ -18,6 +19,7 @@ in { awk ? nixpkgs.gawk
              curl
              grep
              jena
+             jq
              sed
              xml2;
      scripts = [ "fdfd" ];

@@ -86,6 +86,26 @@ command_query() {
         --query "$work"/query.rq
 }
 
+command_review() {
+    if [ $# -ne 0 ]; then exit_usage "review  # pipe from unreviewed"; fi
+    now=$(timestamp)
+    preamble_turtle
+    echo
+    @jq@/bin/jq --arg now "$now" -r '
+        .results.bindings | .[] | [
+            "# Title: \(.title.value)",
+            "# Source: \(.sourceurl.value)",
+            "# Date: \(.date.value)",
+            "<\(.link.value)>",
+            "  amfd:review [",
+            "    amfd:worth-posting ? ;",
+            "    amfd:when \($now)",
+            "  ] .",
+            ""
+        ] | .[]
+        '
+}
+
 command_unposted() {
     if [ $# -ne 1 ]; then exit_usage "unposted DBDIR"; fi
     command_query "$1" '
