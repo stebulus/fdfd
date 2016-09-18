@@ -3,6 +3,8 @@ set -euo pipefail
 me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
 here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
 
+XSD_DATE_FMT="%FT%T.%N%:z"
+
 cleanup() { if [ -v tmp ]; then rm -rf "$tmp"; fi }
 trap cleanup EXIT
 
@@ -49,6 +51,24 @@ command_fetch() {
     done
 }
 
+command_merge() {
+    if [ $# -lt 1 ]; then exit_usage "merge DBDIR [FILE ...]"; fi
+    local dbdir
+    dbdir=$1
+    shift
+    if [ $# -eq 0 ]; then command_merge "$dbdir" -; fi
+    for f in "$@"; do
+        fullf=$(@coreutils@/bin/readlink -e "$f")
+        g=$(nonce 20)
+        {
+            echo "# $fullf"
+            @coreutils@/bin/date +"# ${XSD_DATE_FMT}"
+            @jena@/bin/turtle "$f"
+        } >"$dbdir/.new.$g"
+        @coreutils@/bin/mv "$dbdir/.new.$g" "$dbdir/$g"
+    done
+}
+
 extract_atom() {
     for f in "$@"; do
         itemsdir=$(xml_pieces /feed/entry "$f")
@@ -85,7 +105,7 @@ extract_rss() {
             cat "$f" |
             while IFS='=' read k v; do
                 case "$k" in
-                    pubDate) v=$(xsd_date --date="$v") ;;
+                    pubDate) v=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date="$v") ;;
                     *) ;;
                 esac
                 echo "$k=$v"
@@ -138,7 +158,7 @@ subtmpdir() {
 
 timestamp() {
     local now
-    now=$(xsd_date)
+    now=$(@coreutils@/bin/date +"${XSD_DATE_FMT}")
     echo "\"$now\"^^xsd:dateTime"
 }
 
@@ -162,10 +182,6 @@ xml_pieces() {
             "$f"
     done
     echo "$itemsdir"
-}
-
-xsd_date() {
-    @coreutils@/bin/date +%FT%T.%N%:z "$@"
 }
 
 exit_usage() {
