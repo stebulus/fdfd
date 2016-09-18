@@ -242,7 +242,8 @@ exit_usage() {
             declare -F |
             @grep@/bin/grep '^declare -f command_' |
             @sed@/bin/sed -e 's,^declare -f command_,    ,' \
-                -e 's/_/-/g' >&2
+                -e 's/_/-/g' |
+            @coreutils@/bin/sort >&2
             ;;
         *)  echo "$base $@" >&2
             ;;
