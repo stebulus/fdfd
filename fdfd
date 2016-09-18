@@ -76,7 +76,10 @@ command_merge() {
     shift
     if [ $# -eq 0 ]; then command_merge "$dbdir" -; fi
     for f in "$@"; do
-        fullf=$(@coreutils@/bin/readlink -e "$f")
+        case "$f" in
+            -) fullf="<stdin>" ;;
+            *) fullf=$(@coreutils@/bin/readlink -e "$f") ;;
+        esac
         g=$(nonce 20)
         {
             echo "# $fullf"
