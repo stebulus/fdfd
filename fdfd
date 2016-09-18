@@ -74,10 +74,10 @@ command_unreviewed() {
     local dbdir work
     dbdir=$1
     work=$(subtmpdir)
-    cat "$dbdir"/* >"$work"/all-facts.nt
+    @coreutils@/bin/cat "$dbdir"/* >"$work"/all-facts.nt
     {
         preamble_sparql
-        cat <<EOF
+        @coreutils@/bin/cat <<EOF
 SELECT ?link ?title ?sourceurl ?date
 WHERE {
     ?item a amfd:item ; amfd:link ?link .
@@ -128,7 +128,7 @@ extract_rss() {
     for f in "$@"; do
         itemsdir=$(xml_pieces /rss/channel/item "$f")
         for f in "$itemsdir"/*; do
-            cat "$f" |
+            @coreutils@/bin/cat "$f" |
             while IFS='=' read k v; do
                 case "$k" in
                     pubDate) v=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date="$v") ;;
