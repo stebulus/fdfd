@@ -172,7 +172,7 @@ extract_rss() {
 new_data_subdir() {
     local chars d
     chars=$(nonce 20)
-    mkdir -p "$chars"
+    @coreutils@/bin/mkdir -p "$chars"
     echo "$chars"
 }
 
@@ -201,7 +201,7 @@ subtmpdir() {
     local name
     name=$(nonce 5)
     require_tmp
-    mkdir "$tmp/$name"
+    @coreutils@/bin/mkdir "$tmp/$name"
     echo "$tmp/$name"
 }
 
