@@ -111,13 +111,12 @@ command_unposted() {
     command_query "$1" '
         SELECT ?link ?title ?sourceurl ?date
         WHERE {
-            ?item a amfd:item ;
-                amfd:link ?link ;
-                amfd:review/amfd:worth-posting true .
+            ?item a amfd:item ; amfd:link ?link .
+            ?link amfd:review/amfd:worth-posting true .
             OPTIONAL { ?item dc:title ?title }
             OPTIONAL { ?item dc:source/amfd:fetch-url ?sourceurl }
             OPTIONAL { ?item dc:date ?date }
-            OPTIONAL { ?item amfd:post ?post }
+            OPTIONAL { ?link amfd:post ?post }
             FILTER (!bound(?post))
         }
         '
