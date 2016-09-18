@@ -45,7 +45,7 @@ command_fetch() {
             extract_rss "$fetchdir"/entity
             extract_atom "$fetchdir"/entity
             now=$(timestamp)
-            echo "  amfd:when-end $now ."
+            echo "<.> amfd:when-end $now ."
         } >"$fetchdir"/facts.ttl
         echo "$fetchdir"/facts.ttl
     done
