@@ -152,7 +152,7 @@ command_unreviewed() {
             OPTIONAL { ?item dc:title ?title }
             OPTIONAL { ?item dc:source/amfd:fetch-url ?sourceurl }
             OPTIONAL { ?item dc:date ?date }
-            OPTIONAL { ?item amfd:review ?review }
+            OPTIONAL { ?link amfd:review ?review }
             FILTER (!bound(?review))
         }
         '
