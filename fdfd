@@ -69,6 +69,34 @@ command_merge() {
     done
 }
 
+command_unposted() {
+    if [ $# -ne 1 ]; then exit_usage "unposted DBDIR"; fi
+    local dbdir work
+    dbdir=$1
+    work=$(subtmpdir)
+    @coreutils@/bin/cat "$dbdir"/* >"$work"/all-facts.nt
+    {
+        preamble_sparql
+        @coreutils@/bin/cat <<EOF
+SELECT ?link ?title ?sourceurl ?date
+WHERE {
+    ?item a amfd:item ;
+        amfd:link ?link ;
+        amfd:review/amfd:postable true .
+    OPTIONAL { ?item dc:title ?title }
+    OPTIONAL { ?item dc:source/amfd:fetch-url ?sourceurl }
+    OPTIONAL { ?item dc:date ?date }
+    OPTIONAL { ?item amfd:post ?post }
+    FILTER (!bound(?post))
+}
+EOF
+    } >"$work"/unposted.rq
+    @jena@/bin/sparql \
+        --results json \
+        --data "$work"/all-facts.nt \
+        --query "$work"/unposted.rq
+}
+
 command_unreviewed() {
     if [ $# -ne 1 ]; then exit_usage "unreviewed DBDIR"; fi
     local dbdir work
