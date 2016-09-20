@@ -1,8 +1,10 @@
 let nixpkgs = import <nixpkgs> {};
 in { awk ? nixpkgs.gawk
    , bash ? nixpkgs.bash
+   , bc ? nixpkgs.bc
    , coreutils ? nixpkgs.coreutils
    , curl ? nixpkgs.curl.bin
+   , findutils ? nixpkgs.findutils
    , grep ? nixpkgs.gnugrep
    , jena ? nixpkgs.apache-jena
    , jq ? nixpkgs.jq
@@ -15,14 +17,17 @@ in { awk ? nixpkgs.gawk
      src = ./.;
      inherit awk
              bash
+             bc
              coreutils
              curl
+             findutils
              grep
              jena
              jq
              sed
              xml2;
-     scripts = [ "fdfd" ];
+     scripts = [ "fdfd"
+                 "fetch" ];
      builder = builtins.toFile "builder.sh"
        ''
        source "$stdenv/setup"

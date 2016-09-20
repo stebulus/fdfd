@@ -1,0 +1,42 @@
+#!@bash@/bin/bash
+set -euo pipefail
+me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
+here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
+
+DEFAULT_RATE=5
+
+if [ $# -ne 2 ]; then
+    echo "usage: $me DBDIR RATEFILE" >&2
+    exit 2
+fi
+dbdir=$1
+ratefile=$2
+
+cleanup() {
+    if [ -v tmp ]; then rm -rf "$tmp"; fi
+}
+trap cleanup EXIT
+tmp=$(mktemp --tmpdir --directory "$me".XXXXXXXX)
+
+"$here"/fdfd fetchable "$dbdir" >"$tmp"/fetchable
+
+# rate control to smooth out spikes in number of fetchable feeds
+avail=$(@coreutils@/bin/wc -l <"$tmp"/fetchable)
+if [ -e "$ratefile" ]; then
+    oldrate=$(@coreutils@/bin/cat "$ratefile")
+else
+    oldrate=$DEFAULT_RATE
+fi
+if [ "$avail" -gt 0 ]; then
+    newrate=$(@coreutils@/bin/echo "0.99*$oldrate + 0.01*$avail" |
+        @bc@/bin/bc -l)
+    echo "$newrate" >"$ratefile"
+else
+    newrate=$oldrate
+fi
+tofetch=$(echo "$newrate" |@awk@/bin/awk '{ print int($0+0.5) }')
+
+@coreutils@/bin/sort -R "$tmp"/fetchable |
+@sed@/bin/sed -n "1,${tofetch}p" |
+@findutils@/bin/xargs "$here"/fdfd fetch |
+@findutils@/bin/xargs "$here"/fdfd merge "$dbdir"
