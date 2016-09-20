@@ -24,7 +24,6 @@ command_extract_rss() {
 }
 
 command_fetch() {
-    if [ $# -lt 1 ]; then exit_usage "fetch URL [URL ...]"; fi
     local url fetchbase fetchdir got_items now
     for url in "$@"; do
         fetchdir=$(new_data_subdir)
