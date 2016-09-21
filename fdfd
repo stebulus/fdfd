@@ -7,13 +7,7 @@ XSD_DATE_FMT="%FT%T.%N%:z"
 
 cleanup() { if [ -v tmp ]; then rm -rf "$tmp"; fi }
 trap cleanup EXIT
-
-require_tmp() {
-    declare -g tmp
-    if [ ! -v tmp ]; then
-        tmp=$(@coreutils@/bin/mktemp --directory --tmpdir "$me".XXXXXXXX)
-    fi
-}
+tmp=$(@coreutils@/bin/mktemp --directory --tmpdir "$me".XXXXXXXX)
 
 command_extract_atom() {
     extract_atom "$@"
@@ -239,7 +233,6 @@ preamble_turtle() {
 subtmpdir() {
     local name
     name=$(nonce 5)
-    require_tmp
     @coreutils@/bin/mkdir "$tmp/$name"
     echo "$tmp/$name"
 }
