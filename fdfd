@@ -155,7 +155,7 @@ extract_atom() {
     for f in "$@"; do
         itemsdir=$(xml_pieces /feed/entry "$f")
         for g in "$itemsdir"/*; do
-            linksdir=$(xml_pieces link "$g")
+            linksdir=$(xml2_pieces link "$g")
             for h in "$linksdir"/*; do
                 @awk@/bin/awk '
                     BEGIN { a["rel"] = "alternate" }
@@ -248,12 +248,19 @@ xml_pieces() {
     local file path
     path=$1
     file=$2
+    @xml2@/bin/xml2 < "$file" | xml2_pieces "$path" -
+}
+
+xml2_pieces() {
+    if [ $# -ne 2 ]; then exit_usage "xml2_pieces /foo/bar file"; fi
+    local file path
+    path=$1
+    file=$2
     pathregex=${path//\//\\/}
     itemsdir=$(subtmpdir)
-    @xml2@/bin/xml2 < "$file" |
     @coreutils@/bin/csplit \
         --prefix "$itemsdir"/ \
-        - \
+        "$file" \
         "/^${pathregex}$/" '{*}' \
         >/dev/null
     for f in "$itemsdir"/*; do
