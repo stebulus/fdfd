@@ -57,6 +57,8 @@ command_fetchable() {
                 FILTER (?time > \"$fence\"^^xsd:dateTime)
             }
             FILTER (!bound(?time))
+            OPTIONAL { ?url amfd:nope ?nope . }
+            FILTER (!bound(?nope))
         }
         " |
     @jq@/bin/jq -r '.results.bindings | .[] | .url.value'
@@ -80,6 +82,14 @@ command_merge() {
             @jena@/bin/turtle "$f"
         } >"$dbdir/.new.$g"
         @coreutils@/bin/mv "$dbdir/.new.$g" "$dbdir/$g"
+    done
+}
+
+command_nope() {
+    if [ $# -ge 1 ]; then preamble_turtle; fi
+    for url in "$@"; do
+        now=$(timestamp)
+        echo "<$url> amfd:nope [ amfd:when $now ] ."
     done
 }
 
