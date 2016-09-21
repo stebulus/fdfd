@@ -159,10 +159,10 @@ extract_atom() {
             for h in "$linksdir"/*; do
                 @awk@/bin/awk '
                     BEGIN { a["rel"] = "alternate" }
-                    /^link\/@/ {
+                    /^@/ {
                         i = index($0, "@")
                         j = index($0, "=")
-                        a[substr($0, i+1, j-1)] = substr($0, j+1)
+                        a[substr($0, i+1, j-i-1)] = substr($0, j+1)
                     }
                     END {
                         if (a["rel"] == "alternate" && "href" in a)
