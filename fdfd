@@ -141,12 +141,22 @@ command_unreviewed() {
     command_query "$1" '
         SELECT ?link ?title ?sourceurl ?date
         WHERE {
-            ?item a amfd:item ; amfd:link ?link .
-            OPTIONAL { ?item dc:title ?title }
-            OPTIONAL { ?item dc:source/amfd:fetch-url ?sourceurl }
-            OPTIONAL { ?item dc:date ?date }
-            OPTIONAL { ?link amfd:review ?review }
-            FILTER (!bound(?review))
+            {
+                SELECT ?link (SAMPLE(?item) AS ?someitem)
+                WHERE {
+                    ?item a amfd:item ; amfd:link ?link .
+                    OPTIONAL { ?link amfd:review ?review }
+                    FILTER (!bound(?review))
+                }
+                GROUP BY ?link
+            }
+            {
+                SELECT (SAMPLE(?fetch) AS ?somefetch)
+                WHERE { ?someitem dc:source ?fetch . }
+            }
+            OPTIONAL { ?someitem dc:title ?title }
+            OPTIONAL { ?somefetch amfd:fetch-url ?sourceurl }
+            OPTIONAL { ?someitem dc:date ?date }
         }
         '
 }
