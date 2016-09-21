@@ -162,7 +162,11 @@ command_unreviewed() {
             }
             {
                 SELECT (SAMPLE(?fetch) AS ?somefetch)
-                WHERE { ?someitem dc:source ?fetch . }
+                WHERE {
+                    ?someitem dc:source ?fetch .
+                    OPTIONAL { ?fetch amfd:fetch-url/amfd:nope ?nope . }
+                    FILTER (!bound(?nope))
+                }
             }
             OPTIONAL { ?someitem dc:title ?title }
             OPTIONAL { ?somefetch amfd:fetch-url ?sourceurl }
