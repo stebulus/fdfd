@@ -43,7 +43,7 @@ function rdfuri(s) {
     gsub("\x1d", "\\u001D", s)
     gsub("\x1e", "\\u001E", s)
     gsub("\x1f", "\\u001F", s)
-    gsub("\x20", "\\u0020", s)
+    gsub("\x20", "+", s)
     gsub(/"/, "\\u0022", s)
     gsub(/</, "\\u003C", s)
     gsub(/>/, "\\u003E", s)
