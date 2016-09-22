@@ -86,6 +86,7 @@ command_merge() {
 }
 
 command_nope() {
+    local now
     if [ $# -ge 1 ]; then preamble_turtle; fi
     for url in "$@"; do
         now=$(timestamp)
