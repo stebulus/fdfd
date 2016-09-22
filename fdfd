@@ -17,6 +17,13 @@ command_extract_rss() {
     extract_rss "$@"
 }
 
+command_feed() {
+    if [ $# -gt 0 ]; then preamble_turtle; fi
+    for url in "$@"; do
+        echo "<$url> a amfd:feed ."
+    done
+}
+
 command_fetch() {
     local url fetchbase fetchdir got_items now
     for url in "$@"; do
