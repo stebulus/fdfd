@@ -26,7 +26,7 @@ command_feed() {
 }
 
 command_fetch() {
-    local url fetchbase fetchdir got_items now
+    local url fetchdir now
     for url in "$@"; do
         fetchdir=$(new_data_subdir)
         {
