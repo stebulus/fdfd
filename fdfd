@@ -119,6 +119,24 @@ command_query() {
         --query "$work"/query.rq
 }
 
+command_reddit_auth() {
+    if [ $# -ne 2 ]; then exit_usage "reddit-auth CREDSFILE CODE"; fi
+    local credsfile client_id client_secret redirect_uri
+    credsfile=$1
+    code=$2
+    client_id=$(@jq@/bin/jq -r .client_id "$credsfile")
+    client_secret=$(@jq@/bin/jq -r .client_secret "$credsfile")
+    redirect_uri=$(@jq@/bin/jq -r .redirect_uri "$credsfile")
+    @curl@/bin/curl --silent --show-error --fail \
+        -XPOST \
+        --data grant_type=authorization_code \
+        --data code="$code" \
+        --data redirect_uri="$redirect_uri" \
+        --user "$client_id:$client_secret" \
+        --user-agent "$REDDIT_USER_AGENT" \
+        https://www.reddit.com/api/v1/access_token
+}
+
 command_reddit_authurl() {
     if [ $# -ne 1 ]; then exit_usage "reddit-authurl CREDSFILE"; fi
     local credsfile client_id redirect_uri
