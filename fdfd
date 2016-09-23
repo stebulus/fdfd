@@ -27,43 +27,43 @@ command_fetch() {
             echo "  amfd:fetch-url <$url> ;"
             now=$(timestamp)
             echo "  amfd:when-start $now ."
-            if ! @curl@/bin/curl \
+            @curl@/bin/curl \
                 --compressed \
                 --dump-header "$fetchdir"/headers \
-                --fail \
                 --location \
                 --output "$fetchdir"/entity \
                 --show-error \
                 --silent \
                 "$url"
-            then
-                status=$(@coreutils@/bin/tr -d '\r' \
-                    < "$fetchdir"/headers |
-                    @awk@/bin/awk '
-                        BEGIN { statusLine = 1 }
-                        statusLine {
-                            status = $2
-                            statusLine = 0
-                        }
-                        /^$/ { statusLine = 1 }
-                        END { print status }
-                        ')
-                echo "<.> amfd:error \"curl-${status:0:1}xx\" ."
-            else
-                extracted=none
-                for type in rss atom; do
-                    if "$here/extract-$type" "$fetchdir"/entity; then
-                        extracted=some
-                    fi
-                done
-                case "$extracted" in
-                    some) echo "$me: some extractors succeeded" >&2 ;;
-                    none) echo "$me: no extractors succeeded" >&2
-                        echo "<.> amfd:error \"extract\"" ;;
-                    *) echo "$me: internal error: extracted = $extracted" >&2
-                       ;;
-                esac
-            fi
+            status=$(@coreutils@/bin/tr -d '\r' \
+                < "$fetchdir"/headers |
+                @awk@/bin/awk '
+                    BEGIN { statusLine = 1 }
+                    statusLine {
+                        status = $2
+                        statusLine = 0
+                    }
+                    /^$/ { statusLine = 1 }
+                    END { print status }
+                    ')
+            case "$status" in
+                2*) extracted=none
+                    for type in rss atom; do
+                        if "$here/extract-$type" "$fetchdir"/entity; then
+                            extracted=some
+                        fi
+                    done
+                    case "$extracted" in
+                        some) echo "$me: some extractors succeeded" >&2 ;;
+                        none) echo "$me: no extractors succeeded" >&2
+                            echo "<.> amfd:error \"extract\"" ;;
+                        *) echo "$me: internal error: extracted = $extracted" >&2
+                           ;;
+                    esac
+                    ;;
+                *)  echo "<.> amfd:error \"curl-${status:0:1}xx\" ."
+                    ;;
+            esac
             now=$(timestamp)
             echo "<.> amfd:when-end $now ."
         } >"$fetchdir"/facts.ttl
