@@ -4,6 +4,7 @@ me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
 here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
 
 XSD_DATE_FMT="%FT%T.%N%:z"
+REDDIT_USER_AGENT="linux:org.amotlpaa.thing:v0.2.0 (by /u/stebulus)"
 
 cleanup() { if [ -v tmp ]; then rm -rf "$tmp"; fi }
 trap cleanup EXIT
@@ -116,6 +117,33 @@ command_query() {
         --results json \
         --data "$work"/all-facts.nt \
         --query "$work"/query.rq
+}
+
+command_reddit_reauth() {
+    if [ $# -ne 1 ]; then exit_usage "reddit-reauth AUTHFILE"; fi
+    local authfile refresh_token suffix
+    authfile=$1
+    refresh_token=$(@jq@/bin/jq -r \
+        --arg me "$me" \
+        --arg authfile "$authfile" \
+        '.refresh_token
+          // error("\($me): no refresh token in \($authfile)")' \
+        "$authfile")
+    suffix=$(nonce 5)
+    if @curl@/bin/curl --silent --show-error --fail \
+        -XPOST \
+        --data grant_type=refresh_token \
+        --data refresh_token="$refresh_token" \
+        --user-agent "$REDDIT_USER_AGENT" \
+        https://www.reddit.com/api/v1/access_token \
+        > "${authfile}.new.${suffix}"
+    then
+        @coreutils@/bin/mv "${authfile}.new.${suffix}" "${authfile}"
+    else
+        echo "$me: reddit reauthorization failed" >&2
+        @coreutils@/bin/rm -f "${authfile}.new.${suffix}"
+        return 1
+    fi
 }
 
 command_review() {
