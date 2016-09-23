@@ -119,6 +119,15 @@ command_query() {
         --query "$work"/query.rq
 }
 
+command_reddit_authurl() {
+    if [ $# -ne 1 ]; then exit_usage "reddit-authurl CREDSFILE"; fi
+    local credsfile client_id redirect_uri
+    credsfile=$1
+    client_id=$(@jq@/bin/jq -r .client_id "$credsfile")
+    redirect_uri=$(@jq@/bin/jq -r .redirect_uri "$credsfile")
+    echo "https://www.reddit.com/api/v1/authorize?client_id=${client_id}&response_type=code&state=huzzah&redirect_uri=${redirect_uri}&duration=permanent&scope=read"
+}
+
 command_reddit_reauth() {
     if [ $# -ne 1 ]; then exit_usage "reddit-reauth AUTHFILE"; fi
     local authfile refresh_token suffix
