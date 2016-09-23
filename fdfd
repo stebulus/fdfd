@@ -171,8 +171,15 @@ command_reddit_reauth() {
         --user "$client_id:$client_secret" \
         --user-agent "$REDDIT_USER_AGENT" \
         https://www.reddit.com/api/v1/access_token \
-        > "${authfile}.new.${suffix}"
+        > "$tmp/$suffix"
     then
+        @jq@/bin/jq \
+            --arg refresh "$refresh_token" \
+            'to_entries
+              + [{"key": "refresh_token", "value": $refresh}]
+              | from_entries' \
+            "$tmp/$suffix" \
+            > "${authfile}.new.${suffix}"
         @coreutils@/bin/mv "${authfile}.new.${suffix}" "${authfile}"
         json_get .expires_in "$authfile"
     else
