@@ -26,7 +26,7 @@ command_feed() {
 }
 
 command_fetch() {
-    local url fetchdir now
+    local url fetchdir now extracted status
     for url in "$@"; do
         fetchdir=$(new_data_subdir)
         {
@@ -35,16 +35,40 @@ command_fetch() {
             echo "  amfd:fetch-url <$url> ;"
             now=$(timestamp)
             echo "  amfd:when-start $now ."
-            @curl@/bin/curl \
+            if ! @curl@/bin/curl \
                 --compressed \
                 --dump-header "$fetchdir"/headers \
+                --fail \
                 --location \
                 --output "$fetchdir"/entity \
                 --show-error \
                 --silent \
                 "$url"
-            extract_rss "$fetchdir"/entity
-            extract_atom "$fetchdir"/entity
+            then
+                status=$(@coreutils@/bin/tr -d '\r' \
+                    < "$fetchdir"/headers |
+                    @awk@/bin/awk '
+                        BEGIN { statusLine = 1 }
+                        statusLine {
+                            status = $2
+                            statusLine = 0
+                        }
+                        /^$/ { statusLine = 1 }
+                        END { print status }
+                        ')
+                echo "<.> amfd:error \"curl-${status:0:1}xx\""
+            else
+                extracted=none
+                if extract_rss "$fetchdir"/entity; then extracted=some; fi
+                if extract_atom "$fetchdir"/entity; then extracted=some; fi
+                case "$extracted" in
+                    some) echo "$me: some extractors succeeded" >&2 ;;
+                    none) echo "$me: no extractors succeeded" >&2
+                        echo "<.> amfd:error \"extract\"" ;;
+                    *) echo "$me: internal error: extracted = $extracted" >&2
+                       ;;
+                esac
+            fi
             now=$(timestamp)
             echo "<.> amfd:when-end $now ."
         } >"$fetchdir"/facts.ttl
