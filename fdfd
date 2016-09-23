@@ -54,7 +54,7 @@ command_fetch() {
                         fi
                     done
                     case "$extracted" in
-                        some) echo "$me: some extractors succeeded" >&2 ;;
+                        some) ;;
                         none) echo "$me: no extractors succeeded" >&2
                             echo "<.> amfd:error \"extract\"" ;;
                         *) echo "$me: internal error: extracted = $extracted" >&2
