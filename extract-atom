@@ -1,0 +1,37 @@
+#!@bash@/bin/bash
+set -euo pipefail
+me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
+here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
+
+cleanup() {
+    if [ -v itemsdir ]; then @coreutils@/bin/rm -rf "$itemsdir"; fi
+    if [ -v linksdir ]; then @coreutils@/bin/rm -rf "$linksdir"; fi
+}
+trap cleanup EXIT
+
+for f in "$@"; do
+    itemsdir=$(@xml2@/bin/xml2 < "$f" | "$here"/xml2-pieces /feed/entry)
+    for g in "$itemsdir"/*; do
+        linksdir=$("$here"/xml2-pieces link "$g")
+        for h in "$linksdir"/*; do
+            @awk@/bin/awk '
+                BEGIN { a["rel"] = "alternate" }
+                /^@/ {
+                    i = index($0, "@")
+                    j = index($0, "=")
+                    a[substr($0, i+1, j-i-1)] = substr($0, j+1)
+                }
+                END {
+                    if (a["rel"] == "alternate" && "href" in a)
+                        print "properlink=" a["href"]
+                }
+                ' "$h"
+        done >>"$g"
+        @awk@/bin/awk -f "$here"/../lib/items.awk --source '
+            $1 == "title" { stash("title") }
+            $1 == "properlink" { stash("link") }
+            $1 == "id" { stash("id") }
+            $1 == "updated" { stash("date") }
+            ' "$g"
+    done
+done

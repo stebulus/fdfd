@@ -1,0 +1,31 @@
+#!@bash@/bin/bash
+set -euo pipefail
+me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
+
+case $# in
+    1)  path=$1
+        file=-
+        ;;
+    2)  path=$1
+        file=$2
+        ;;
+    *)  echo "usage: $me /foo/bar [file]"
+        exit 2
+        ;;
+esac
+outdir=$(@coreutils@/bin/mktemp --tmpdir --directory "$me".XXXXXXXX)
+prefix=$outdir/xx
+pathregex=${path//\//\\/}
+
+@coreutils@/bin/csplit \
+    --prefix "$prefix" \
+    "$file" \
+    "/^${pathregex}$/" '{*}' \
+    >/dev/null
+for f in "$prefix"*; do
+    @sed@/bin/sed -i \
+        -e "/^${pathregex}\//!d" \
+        -e "s,^${pathregex}\/,," \
+        "$f"
+done
+echo "$outdir"

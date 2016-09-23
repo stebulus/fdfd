@@ -26,8 +26,11 @@ in { awk ? nixpkgs.gawk
              jq
              sed
              xml2;
-     scripts = [ "fdfd"
-                 "fetch" ];
+     scripts = [ "extract-atom"
+                 "extract-rss"
+                 "fdfd"
+                 "fetch"
+                 "xml2-pieces" ];
      builder = builtins.toFile "builder.sh"
        ''
        source "$stdenv/setup"
