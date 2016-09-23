@@ -120,30 +120,30 @@ command_query() {
 }
 
 command_reddit_auth() {
-    if [ $# -ne 2 ]; then exit_usage "reddit-auth CREDSFILE CODE"; fi
     local credsfile client_id client_secret redirect_uri
-    credsfile=$1
-    code=$2
-    client_id=$(@jq@/bin/jq -r .client_id "$credsfile")
-    client_secret=$(@jq@/bin/jq -r .client_secret "$credsfile")
-    redirect_uri=$(@jq@/bin/jq -r .redirect_uri "$credsfile")
-    @curl@/bin/curl --silent --show-error --fail \
-        -XPOST \
-        --data grant_type=authorization_code \
-        --data code="$code" \
-        --data redirect_uri="$redirect_uri" \
-        --user "$client_id:$client_secret" \
-        --user-agent "$REDDIT_USER_AGENT" \
-        https://www.reddit.com/api/v1/access_token
-}
-
-command_reddit_authurl() {
-    if [ $# -ne 1 ]; then exit_usage "reddit-authurl CREDSFILE"; fi
-    local credsfile client_id redirect_uri
-    credsfile=$1
-    client_id=$(@jq@/bin/jq -r .client_id "$credsfile")
-    redirect_uri=$(@jq@/bin/jq -r .redirect_uri "$credsfile")
-    echo "https://www.reddit.com/api/v1/authorize?client_id=${client_id}&response_type=code&state=huzzah&redirect_uri=${redirect_uri}&duration=permanent&scope=read"
+    case $# in
+        1) credsfile=$1
+           client_id=$(json_get .client_id "$credsfile")
+           redirect_uri=$(json_get .redirect_uri "$credsfile")
+           echo "https://www.reddit.com/api/v1/authorize?client_id=${client_id}&response_type=code&state=huzzah&redirect_uri=${redirect_uri}&duration=permanent&scope=read"
+           ;;
+        2) credsfile=$1
+           code=$2
+           client_id=$(json_get .client_id "$credsfile")
+           client_secret=$(json_get .client_secret "$credsfile")
+           redirect_uri=$(json_get .redirect_uri "$credsfile")
+           @curl@/bin/curl --silent --show-error --fail \
+               -XPOST \
+               --data grant_type=authorization_code \
+               --data code="$code" \
+               --data redirect_uri="$redirect_uri" \
+               --user "$client_id:$client_secret" \
+               --user-agent "$REDDIT_USER_AGENT" \
+               https://www.reddit.com/api/v1/access_token
+           ;;
+        *) exit_usage "reddit-auth CREDSFILE [CODE]"
+           ;;
+    esac
 }
 
 command_reddit_reauth() {
@@ -166,7 +166,7 @@ command_reddit_reauth() {
         > "${authfile}.new.${suffix}"
     then
         @coreutils@/bin/mv "${authfile}.new.${suffix}" "${authfile}"
-        @jq@/bin/jq -r .expires_in "$authfile"
+        json_get .expires_in "$authfile"
     else
         echo "$me: reddit reauthorization failed" >&2
         @coreutils@/bin/rm -f "${authfile}.new.${suffix}"
@@ -288,6 +288,17 @@ extract_rss() {
                 '
         done
     done
+}
+
+json_get() {
+    key=$1
+    file=$2
+    @jq@/bin/jq -r \
+        --arg me "$me" \
+        --arg key "$key" \
+        --arg file "$file" \
+        "$key"' // error("\($me): \($key) not found in \($file)")' \
+        "$file"
 }
 
 new_data_subdir() {
