@@ -147,20 +147,28 @@ command_reddit_auth() {
 }
 
 command_reddit_reauth() {
-    if [ $# -ne 1 ]; then exit_usage "reddit-reauth AUTHFILE"; fi
-    local authfile refresh_token suffix
-    authfile=$1
-    refresh_token=$(@jq@/bin/jq -r \
-        --arg me "$me" \
-        --arg authfile "$authfile" \
-        '.refresh_token
-          // error("\($me): no refresh token in \($authfile)")' \
-        "$authfile")
+    if [ $# -ne 2 ]; then
+        exit_usage "reddit-reauth CREDSFILE AUTHFILE"
+    fi
+    local authfile credsfile refresh_token suffix
+    credsfile=$1
+    authfile=$2
+    client_id=$(json_get .client_id "$credsfile")
+    client_secret=$(json_get .client_secret "$credsfile")
+    redirect_uri=$(json_get .redirect_uri "$credsfile")
+    refresh_token=$(json_get .refresh_token "$authfile")
     suffix=$(nonce 5)
     if @curl@/bin/curl --silent --show-error --fail \
         -XPOST \
+        --data client_id="$client_id" \
+        --data client_secret="$client_secret" \
         --data grant_type=refresh_token \
         --data refresh_token="$refresh_token" \
+        --data scope=read \
+        --data state=huzzah \
+        --data duration=temporary \
+        --data redirect_uri="$redirect_uri" \
+        --user "$client_id:$client_secret" \
         --user-agent "$REDDIT_USER_AGENT" \
         https://www.reddit.com/api/v1/access_token \
         > "${authfile}.new.${suffix}"
