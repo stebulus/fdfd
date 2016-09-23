@@ -48,7 +48,7 @@ command_fetch() {
                         /^$/ { statusLine = 1 }
                         END { print status }
                         ')
-                echo "<.> amfd:error \"curl-${status:0:1}xx\""
+                echo "<.> amfd:error \"curl-${status:0:1}xx\" ."
             else
                 extracted=none
                 for type in rss atom; do
