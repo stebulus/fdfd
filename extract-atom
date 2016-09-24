@@ -32,6 +32,8 @@ for f in "$@"; do
             $1 == "properlink" { stash("link") }
             $1 == "id" { stash("id") }
             $1 == "updated" { stash("date") }
+            $1 == "amfdr:item-name" { stash("reddit-item-name") }
+            $1 == "amfdr:subreddit" { stash("subreddit") }
             ' "$g"
     done
 done

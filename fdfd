@@ -48,7 +48,7 @@ command_fetch() {
                     ')
             case "$status" in
                 2*) extracted=none
-                    for type in rss atom; do
+                    for type in rss atom reddit; do
                         if "$here/extract-$type" "$fetchdir"/entity 2>/dev/null; then
                             extracted=some
                         fi
@@ -298,6 +298,7 @@ nonce() {
 
 preamble_raw() {
     echo "amfd: <tag:amotlpaa.org,2016:fdfd/>"
+    echo "amfdr: <tag:amotlpaa.org,2016:fdfd-reddit/>"
     echo "dc: <http://purl.org/dc/terms/>"
     echo "rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>"
     echo "xsd: <http://www.w3.org/2001/XMLSchema#>"

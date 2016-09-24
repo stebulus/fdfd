@@ -1,0 +1,35 @@
+#!@bash@/bin/bash
+set -euo pipefail
+me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
+here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
+
+cleanup() {
+    if [ -v tmpfile ]; then rm -f "$tmpfile"; fi
+}
+trap cleanup EXIT
+tmpfile=$(mktemp --tmpdir "$me".XXXXXXXX)
+
+{
+    echo '<?xml version="1.0" encoding="utf-8"?>'
+    echo '<feed xmlns="http://www.w3.org/2005/Atom"'
+    echo '      xmlns:amfdr="tag:amotlpaa.org,2016:fdfd-reddit/">'
+    for f in "$@"; do
+        @jq@/bin/jq -r '
+            .data.children | .[] | .data |
+            select(.domain != "self." + .subreddit) |
+            [ "<entry>"
+            , @html "<id>https://www.reddit.com\(.permalink)</id>"
+            , @html "<title>\(.title)</title>"
+            , @html "<updated>\(.created_utc | todateiso8601)</updated>"
+            , @html "<link rel=\"alternate\" href=\"\(.url)\" />"
+            , @html "<author><name>Reddit user \(.author)</name><uri>https://reddit.com/user/\(.author)</uri></author>"
+            , @html "<amfdr:subreddit>\(.subreddit)</amfdr:subreddit>"
+            , @html "<amfdr:item-name>\(.name)</amfdr:item-name>"
+            , "</entry>"
+            ] |
+            .[]
+            ' "$f"
+    done
+    echo '</feed>'
+} >"$tmpfile"
+"$here"/extract-atom "$tmpfile"

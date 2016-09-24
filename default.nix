@@ -27,6 +27,7 @@ in { awk ? nixpkgs.gawk
              sed
              xml2;
      scripts = [ "extract-atom"
+                 "extract-reddit"
                  "extract-rss"
                  "fdfd"
                  "fetch"

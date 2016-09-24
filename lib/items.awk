@@ -87,6 +87,10 @@ END {
             print "  dc:date " rdfstr(item["date"]) "^^xsd:dateTime ;"
         if ("link" in item)
             print "  amfd:link " rdfuri(item["link"]) " ;"
+        if ("reddit-item-name" in item)
+            print "  amfdr:item-name " rdfstr(item["reddit-item-name"]) " ;"
+        if ("subreddit" in item)
+            print "  amfdr:subreddit " rdfstr(item["subreddit"]) " ;"
         print "  dc:source <.> ."
     }
 }
