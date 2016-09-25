@@ -9,7 +9,7 @@ case $# in
     2)  path=$1
         file=$2
         ;;
-    *)  echo "usage: $me /foo/bar [file]"
+    *)  echo "usage: $me /foo/bar [file]" >&2
         exit 2
         ;;
 esac
