@@ -274,7 +274,7 @@ command_review() {
     echo
     @jq@/bin/jq --arg now "$now" -r '
         .results.bindings | .[] | [
-            "# Title: \(.title.value)",
+            @json "# Title: \(.title.value)",
             "# Source: \(.sourceurl.value)",
             "# Date: \(.date.value)",
             "<\(.link.value)>",
