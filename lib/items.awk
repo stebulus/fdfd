@@ -90,7 +90,7 @@ END {
         if ("reddit-item-name" in item)
             print "  amfdr:item-name " rdfstr(item["reddit-item-name"]) " ;"
         if ("subreddit" in item)
-            print "  amfdr:subreddit " rdfstr(item["subreddit"]) " ;"
+            print "  amfdr:subreddit " rdfuri(item["subreddit"]) " ;"
         print "  dc:source <.> ."
     }
 }

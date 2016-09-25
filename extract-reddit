@@ -23,7 +23,7 @@ tmpfile=$(mktemp --tmpdir "$me".XXXXXXXX)
             , @html "<updated>\(.created_utc | todateiso8601)</updated>"
             , @html "<link rel=\"alternate\" href=\"\(.url)\" />"
             , @html "<author><name>Reddit user \(.author)</name><uri>https://reddit.com/user/\(.author)</uri></author>"
-            , @html "<amfdr:subreddit>\(.subreddit)</amfdr:subreddit>"
+            , @html "<amfdr:subreddit>https://www.reddit.com/r/\(.subreddit)</amfdr:subreddit>"
             , @html "<amfdr:item-name>\(.name)</amfdr:item-name>"
             , "</entry>"
             ] |
