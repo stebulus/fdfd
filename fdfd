@@ -322,6 +322,7 @@ command_unreviewed() {
                 WHERE {
                     ?item a amfd:item ; amfd:link ?link .
                     FILTER NOT EXISTS { ?link amfd:review ?review }
+                    FILTER NOT EXISTS { ?item amfdr:self true }
                 }
                 GROUP BY ?link
             }

@@ -16,7 +16,6 @@ tmpfile=$(mktemp --tmpdir "$me".XXXXXXXX)
     for f in "$@"; do
         @jq@/bin/jq -r '
             .data.children | .[] | .data |
-            select(.domain != "self." + .subreddit) |
             [ "<entry>"
             , @html "<id>https://www.reddit.com\(.permalink)</id>"
             , @html "<title>\(.title)</title>"
@@ -25,6 +24,7 @@ tmpfile=$(mktemp --tmpdir "$me".XXXXXXXX)
             , @html "<author><name>Reddit user \(.author)</name><uri>https://reddit.com/user/\(.author)</uri></author>"
             , @html "<amfdr:subreddit>https://www.reddit.com/r/\(.subreddit)</amfdr:subreddit>"
             , @html "<amfdr:item-name>\(.name)</amfdr:item-name>"
+            , @html "<amfdr:self>\(.domain == "self." + .subreddit)</amfdr:self>"
             , "</entry>"
             ] |
             .[]
