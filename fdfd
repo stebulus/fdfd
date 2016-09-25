@@ -86,9 +86,12 @@ command_fetchable() {
     if [ $# -ne 1 ]; then exit_usage "fetchable DBDIR"; fi
     local fence
     fence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "29 hours ago")
+    longfence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "7 days ago")
+
     command_query "$1" "
         SELECT ?url
-        WHERE {
+        WHERE { {
+            # plain old feeds that haven't been fetched recently
             ?url a amfd:feed .
             OPTIONAL {
                 ?url ^amfd:fetch-url/amfd:when-end ?time .
@@ -97,9 +100,61 @@ command_fetchable() {
             FILTER (!bound(?time))
             OPTIONAL { ?url amfd:nope ?nope . }
             FILTER (!bound(?nope))
-        }
-        " |
+        } UNION {
+            # subreddits that haven't been fetched since before longfence:
+            # start over, just fetch current page of listings
+            ?subreddit a amfd:subreddit ;
+                amfdr:subreddit-name ?subredditname .
+            OPTIONAL {
+                ?item a amfd:item ;
+                    amfdr:subreddit ?subreddit ;
+                    dc:source/amfd:when-end ?time .
+                FILTER (?time > \"$longfence\"^^xsd:dateTime)
+            }
+            FILTER (!bound(?time))
+            OPTIONAL { ?subreddit amfd:nope ?nope . }
+            FILTER (!bound(?nope))
+            BIND (URI(CONCAT(
+                \"https://oauth.reddit.com/r/\",
+                ?subredditname,
+                \"/new?raw_json=1\"
+            )) AS ?url)
+        } UNION {
+            # subreddits being fetched, whose natural next page
+            # either hasn't been fetched ever
+            # or was fetched only before fence and was empty then
+            {
+                SELECT ?subreddit (MAX(?name) AS ?maxname)
+                WHERE {
+                    ?item amfdr:item-name ?name ;
+                        amfdr:subreddit ?subreddit ;
+                        dc:source/amfd:when-end ?time .
+                    FILTER (?time > \"$longfence\"^^xsd:dateTime)
+                    OPTIONAL { ?subreddit amfd:nope ?nope . }
+                    FILTER (!bound(?nope))
+                }
+                GROUP BY ?subreddit
+                HAVING (bound(?maxname))
+            }
+            ?subreddit amfdr:subreddit-name ?subredditname .
+            BIND (URI(CONCAT(
+                \"https://oauth.reddit.com/r/\",
+                ?subredditname,
+                \"/new?raw_json=1&before=\",
+                ?maxname
+            )) AS ?url)
+            FILTER NOT EXISTS {
+                ?fetch amfd:fetch-url ?url .
+                {
+                    ?fetch amfd:when-end ?time .
+                    FILTER (?time > \"$fence\"^^xsd:dateTime)
+                } UNION {
+                    FILTER EXISTS { ?item dc:source ?fetch }
+                }
+            }
+        } }" |
     @jq@/bin/jq -r '.results.bindings | .[] | .url.value'
+
 }
 
 command_merge() {
@@ -237,6 +292,14 @@ command_review() {
             ""
         ] | .[]
         '
+}
+
+command_subreddit() {
+    if [ $# -gt 0 ]; then preamble_turtle; fi
+    for r in "$@"; do
+        echo "<https://www.reddit.com/r/$r> a amfd:subreddit ;"
+        echo "    amfdr:subreddit-name \"$r\" ."
+    done
 }
 
 command_unposted() {
