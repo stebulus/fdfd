@@ -329,22 +329,24 @@ command_reviewable() {
         SELECT ?link ?title ?sourceurl ?date
         WHERE {
             {
-                SELECT ?link (SAMPLE(?item) AS ?someitem)
+                SELECT ?link ?someitem (SAMPLE(?fetch) AS ?somefetch)
                 WHERE {
-                    ?item a amfd:item ; amfd:link ?link .
-                    FILTER NOT EXISTS { ?link amfd:review ?review }
-                    FILTER NOT EXISTS { ?item amfdr:self true }
-                }
-                GROUP BY ?link
-            }
-            {
-                SELECT (SAMPLE(?fetch) AS ?somefetch)
-                WHERE {
-                    ?someitem dc:source ?fetch .
-                    FILTER NOT EXISTS {
-                        ?fetch amfd:fetch-url/amfd:nope ?nope .
+                    {
+                        SELECT ?link (SAMPLE(?item) AS ?someitem)
+                        WHERE {
+                            ?item a amfd:item ; amfd:link ?link .
+                            FILTER NOT EXISTS
+                                { ?link amfd:review ?review }
+                            FILTER NOT EXISTS
+                                { ?item amfdr:self true }
+                        }
+                        GROUP BY ?link
                     }
+                    ?someitem dc:source ?fetch .
+                    FILTER NOT EXISTS
+                        { ?fetch amfd:fetch-url/amfd:nope ?nope . }
                 }
+                GROUP BY ?link ?someitem
             }
             OPTIONAL { ?someitem dc:title ?title }
             OPTIONAL { ?somefetch amfd:fetch-url ?sourceurl }
