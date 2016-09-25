@@ -307,8 +307,7 @@ command_unposted() {
             OPTIONAL { ?item dc:title ?title }
             OPTIONAL { ?item dc:source/amfd:fetch-url ?sourceurl }
             OPTIONAL { ?item dc:date ?date }
-            OPTIONAL { ?link amfd:post ?post }
-            FILTER (!bound(?post))
+            FILTER NOT EXISTS { ?link amfd:post ?post }
         }
         '
 }
@@ -322,8 +321,7 @@ command_unreviewed() {
                 SELECT ?link (SAMPLE(?item) AS ?someitem)
                 WHERE {
                     ?item a amfd:item ; amfd:link ?link .
-                    OPTIONAL { ?link amfd:review ?review }
-                    FILTER (!bound(?review))
+                    FILTER NOT EXISTS { ?link amfd:review ?review }
                 }
                 GROUP BY ?link
             }
@@ -331,8 +329,9 @@ command_unreviewed() {
                 SELECT (SAMPLE(?fetch) AS ?somefetch)
                 WHERE {
                     ?someitem dc:source ?fetch .
-                    OPTIONAL { ?fetch amfd:fetch-url/amfd:nope ?nope . }
-                    FILTER (!bound(?nope))
+                    FILTER NOT EXISTS {
+                        ?fetch amfd:fetch-url/amfd:nope ?nope .
+                    }
                 }
             }
             OPTIONAL { ?someitem dc:title ?title }
