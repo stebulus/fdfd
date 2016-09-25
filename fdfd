@@ -268,7 +268,7 @@ command_reddit_reauth() {
 }
 
 command_review() {
-    if [ $# -ne 0 ]; then exit_usage "review  # pipe from unreviewed"; fi
+    if [ $# -ne 0 ]; then exit_usage "review  # pipe from reviewable"; fi
     now=$(timestamp)
     preamble_turtle
     echo
@@ -295,8 +295,8 @@ command_subreddit() {
     done
 }
 
-command_unposted() {
-    if [ $# -ne 1 ]; then exit_usage "unposted DBDIR"; fi
+command_postable() {
+    if [ $# -ne 1 ]; then exit_usage "postable DBDIR"; fi
     command_query "$1" '
         SELECT ?link ?title ?sourceurl ?date
         WHERE {
@@ -310,8 +310,8 @@ command_unposted() {
         '
 }
 
-command_unreviewed() {
-    if [ $# -ne 1 ]; then exit_usage "unreviewed DBDIR"; fi
+command_reviewable() {
+    if [ $# -ne 1 ]; then exit_usage "reviewable DBDIR"; fi
     command_query "$1" '
         SELECT ?link ?title ?sourceurl ?date
         WHERE {
