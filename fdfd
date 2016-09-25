@@ -18,7 +18,7 @@ command_feed() {
 }
 
 command_fetch() {
-    local url fetchdir now extracted status
+    local url fetchdir now extracted status extra_curl_opts reddit_token
     for url in "$@"; do
         fetchdir=$(new_data_subdir)
         {
@@ -27,6 +27,17 @@ command_fetch() {
             echo "  amfd:fetch-url <$url> ;"
             now=$(timestamp)
             echo "  amfd:when-start $now ."
+            case "$url" in
+                https://oauth.reddit.com/*)
+                    reddit_token=$(@jq@/bin/jq -r .access_token \
+                        "$REDDIT_AUTH_FILE")
+                    extra_curl_opts=(
+                        -H "Authorization: Bearer $reddit_token"
+                        -A "$REDDIT_USER_AGENT"
+                    )
+                    ;;
+                *)  unset -v extra_curl_opts
+            esac
             @curl@/bin/curl \
                 --compressed \
                 --dump-header "$fetchdir"/headers \
@@ -34,6 +45,7 @@ command_fetch() {
                 --output "$fetchdir"/entity \
                 --show-error \
                 --silent \
+                ${extra_curl_opts:+"${extra_curl_opts[@]}"} \
                 "$url"
             status=$(@coreutils@/bin/tr -d '\r' \
                 < "$fetchdir"/headers |
