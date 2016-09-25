@@ -116,7 +116,7 @@ command_fetchable() {
                 \"/new?raw_json=1\"
             )) AS ?url)
         } UNION {
-            # subreddits being fetched, whose natural next page
+            # subreddits whose natural next page
             # either hasn't been fetched ever
             # or was fetched only before fence and was empty then
             {
