@@ -87,7 +87,6 @@ command_fetchable() {
     local fence
     fence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "29 hours ago")
     longfence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "7 days ago")
-
     command_query "$1" "
         SELECT ?url
         WHERE { {
@@ -149,7 +148,6 @@ command_fetchable() {
             }
         } }" |
     @jq@/bin/jq -r '.results.bindings | .[] | .url.value'
-
 }
 
 command_merge() {
