@@ -93,27 +93,23 @@ command_fetchable() {
         WHERE { {
             # plain old feeds that haven't been fetched recently
             ?url a amfd:feed .
-            OPTIONAL {
+            FILTER NOT EXISTS {
                 ?url ^amfd:fetch-url/amfd:when-end ?time .
                 FILTER (?time > \"$fence\"^^xsd:dateTime)
             }
-            FILTER (!bound(?time))
-            OPTIONAL { ?url amfd:nope ?nope . }
-            FILTER (!bound(?nope))
+            FILTER NOT EXISTS { ?url amfd:nope ?nope . }
         } UNION {
             # subreddits that haven't been fetched since before longfence:
             # start over, just fetch current page of listings
             ?subreddit a amfd:subreddit ;
                 amfdr:subreddit-name ?subredditname .
-            OPTIONAL {
+            FILTER NOT EXISTS {
                 ?item a amfd:item ;
                     amfdr:subreddit ?subreddit ;
                     dc:source/amfd:when-end ?time .
                 FILTER (?time > \"$longfence\"^^xsd:dateTime)
             }
-            FILTER (!bound(?time))
-            OPTIONAL { ?subreddit amfd:nope ?nope . }
-            FILTER (!bound(?nope))
+            FILTER NOT EXISTS { ?subreddit amfd:nope ?nope . }
             BIND (URI(CONCAT(
                 \"https://oauth.reddit.com/r/\",
                 ?subredditname,
@@ -130,8 +126,7 @@ command_fetchable() {
                         amfdr:subreddit ?subreddit ;
                         dc:source/amfd:when-end ?time .
                     FILTER (?time > \"$longfence\"^^xsd:dateTime)
-                    OPTIONAL { ?subreddit amfd:nope ?nope . }
-                    FILTER (!bound(?nope))
+                    FILTER NOT EXISTS { ?subreddit amfd:nope ?nope . }
                 }
                 GROUP BY ?subreddit
                 HAVING (bound(?maxname))
