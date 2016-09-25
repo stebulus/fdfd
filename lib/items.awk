@@ -92,7 +92,7 @@ END {
         if ("subreddit" in item)
             print "  amfdr:subreddit " rdfuri(item["subreddit"]) " ;"
         if ("reddit-self" in item)
-            print "  amfdr:self " item["subreddit"] " ;"
+            print "  amfdr:self " item["reddit-self"] " ;"
         print "  dc:source <.> ."
     }
 }
