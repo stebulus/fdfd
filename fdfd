@@ -52,7 +52,7 @@ command_fetch() {
             *)  echo "<.> amfd:error \"curl-${status:0:1}xx\" ."
                 ;;
         esac
-        stash "$workdir"/fetch "$s3base/s3dir" >&2
+        stash "$workdir"/fetch "$s3base/$s3dir" >&2
         now=$(timestamp)
         echo "<.> amfd:when-end $now ."
     done
