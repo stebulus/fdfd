@@ -17,7 +17,7 @@ cleanup() {
     if [ -v tmp ]; then rm -rf "$tmp"; fi
 }
 trap cleanup EXIT
-tmp=$(mktemp --tmpdir --directory "$me".XXXXXXXX)
+tmp=$(@coreutils@/bin/mktemp --tmpdir --directory "$me".XXXXXXXX)
 
 "$here"/fdfd fetchable "$dbdir" >"$tmp"/fetchable
 
