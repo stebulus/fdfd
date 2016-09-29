@@ -18,21 +18,28 @@ command_feed() {
 }
 
 command_fetch() {
-    local url fetchdir now extracted status
+    local url fetchdir now extracted status s3base s3dir s3ff workdir
+    if [ $# -lt 1 ]; then exit_usage "fetch S3BASE [URL ...]"; fi
+    s3base=$1
+    shift
+    workdir=$(subtmpdir)
     for url in "$@"; do
-        fetchdir=$(new_data_subdir)
+        @coreutils@/bin/rm -rf "$workdir"/fetch
+        @coreutils@/bin/mkdir "$workdir"/fetch
+        s3dir=$(s3_fetch_dir "$url")
         {
             preamble_turtle
+            echo "@base <$s3dir/> ."
             echo "<.> rdf:type amfd:fetch ;"
             echo "  amfd:fetch-url <$url> ;"
             now=$(timestamp)
             echo "  amfd:when-start $now ."
-            fetch_one "$url" "$fetchdir"
-            status=$(curl_headers_status "$fetchdir"/headers)
+            fetch_one "$url" "$workdir"/fetch
+            status=$(curl_headers_status "$workdir"/fetch/headers)
             case "$status" in
                 2*) extracted=none
                     for type in rss atom reddit; do
-                        if "$here/extract-$type" "$fetchdir"/entity 2>/dev/null; then
+                        if "$here/extract-$type" "$workdir"/fetch/entity 2>/dev/null; then
                             extracted=some
                         fi
                     done
@@ -48,8 +55,10 @@ command_fetch() {
             esac
             now=$(timestamp)
             echo "<.> amfd:when-end $now ."
-        } >"$fetchdir"/facts.ttl
-        echo "$fetchdir"/facts.ttl
+        } >"$workdir"/facts.ttl
+        @aws@/bin/aws s3 sync "$workdir"/fetch/ "$s3base/$s3dir/"
+        s3ff=$(s3_facts_file)
+        @aws@/bin/aws s3 cp "$workdir"/facts.ttl "$s3base/$s3ff"
     done
 }
 
@@ -406,6 +415,27 @@ preamble_sparql() {
 
 preamble_turtle() {
     preamble_raw | @sed@/bin/sed 's,.*,@prefix & .,'
+}
+
+s3_facts_file() {
+    local datepart chars
+    if [ $# -ne 0 ]; then exit_usage s3_facts_file; fi
+    datepart=$(@coreutils@/bin/date -u +%F |@coreutils@/bin/tr - /)
+    chars=$(nonce 10)
+    echo "facts/$datepart/$chars.ttl"
+}
+
+s3_fetch_dir() {
+    local url datepart domain chars
+    if [ $# -ne 1 ]; then exit_usage "s3_fetch_dir URL"; fi
+    url=$1
+    datepart=$(@coreutils@/bin/date -u +%F |@coreutils@/bin/tr - /)
+    domain=$(@sed@/bin/sed \
+        -e 's,^[^:]*://,,' \
+        -e 's,/.*$,,' \
+        <<< "$url")
+    chars=$(nonce 10)
+    echo "fetch/$datepart/$domain/$chars"
 }
 
 subtmpdir() {
