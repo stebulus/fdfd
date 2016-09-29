@@ -338,7 +338,7 @@ curl_headers_status() {
         }
         /^$/ { statusLine = 1 }
         END { print status }
-        ')
+        '
 }
 
 fetch_one() {
