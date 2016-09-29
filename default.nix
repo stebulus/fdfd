@@ -1,6 +1,5 @@
 let nixpkgs = import <nixpkgs> {};
 in { awk ? nixpkgs.gawk
-   , aws ? nixpkgs.aws
    , bash ? nixpkgs.bash
    , bc ? nixpkgs.bc
    , coreutils ? nixpkgs.coreutils
@@ -17,7 +16,6 @@ in { awk ? nixpkgs.gawk
      name = "fdfd-0.1.0";
      src = ./.;
      inherit awk
-             aws
              bash
              bc
              coreutils

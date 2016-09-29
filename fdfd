@@ -146,7 +146,7 @@ command_merge() {
         } >"$dbdir/ff/.new.$g"
         @coreutils@/bin/mv "$dbdir/ff/.new.$g" "$dbdir/ff/$g"
         s3ff=$(s3_facts_file)
-        @aws@/bin/aws s3 cp "$dbdir/ff/$g" "$s3base/$s3ff"
+        /usr/bin/aws s3 cp "$dbdir/ff/$g" "$s3base/$s3ff"
     done
 }
 
@@ -446,7 +446,7 @@ stash() {
         echo "$me: already stashed: $dir" >&2
         return 1
     fi
-    @aws@/bin/aws s3 sync "$dir/" "$s3dir/"
+    /usr/bin/aws s3 sync "$dir/" "$s3dir/"
     echo "$s3dir/" >"$dir"/stashed
 }
 
