@@ -11,6 +11,7 @@ if [ $# -ne 2 ]; then
 fi
 dbdir=$1
 ratefile=$2
+s3base=$(@coreutils@/bin/cat "$dbdir"/s3base)
 
 cleanup() {
     if [ -v tmp ]; then rm -rf "$tmp"; fi
@@ -39,7 +40,7 @@ tofetch=$(echo "$newrate" |@awk@/bin/awk '{ print int($0+0.5) }')
 @coreutils@/bin/sort -R "$tmp"/fetchable |
 @sed@/bin/sed -n "1,${tofetch}p" |
 while read url; do
-  if ! "$here"/fdfd fetch "$url" | "$here"/fdfd merge "$dbdir"; then
+  if ! "$here"/fdfd fetch "$s3base" "$url" | "$here"/fdfd merge "$dbdir"; then
     echo "$me: error fetching & merging $url" >&2
   fi
 done
