@@ -6,7 +6,7 @@ here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
 XSD_DATE_FMT="%FT%T.%N%:z"
 REDDIT_USER_AGENT="linux:org.amotlpaa.thing:v0.2.0 (by /u/stebulus)"
 
-cleanup() { if [ -v tmp ]; then rm -rf "$tmp"; fi }
+cleanup() { if [ -v tmp ]; then @coreutils@/bin/rm -rf "$tmp"; fi }
 trap cleanup EXIT
 tmp=$(@coreutils@/bin/mktemp --directory --tmpdir "$me".XXXXXXXX)
 
