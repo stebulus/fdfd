@@ -3,6 +3,8 @@ set -euo pipefail
 me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
 here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
 
+XSD_DATE_FMT="%FT%T.%N%:z"
+
 cleanup() {
     if [ -v tmp ]; then @coreutils@/bin/rm -rf "$tmp"; fi
 }
