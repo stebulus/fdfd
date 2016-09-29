@@ -27,17 +27,7 @@ command_fetch() {
             now=$(timestamp)
             echo "  amfd:when-start $now ."
             fetchdir=$(fetch_one "$url")
-            status=$(@coreutils@/bin/tr -d '\r' \
-                < "$fetchdir"/headers |
-                @awk@/bin/awk '
-                    BEGIN { statusLine = 1 }
-                    statusLine {
-                        status = $2
-                        statusLine = 0
-                    }
-                    /^$/ { statusLine = 1 }
-                    END { print status }
-                    ')
+            status=$(curl_headers_status "$fetchdir"/headers)
             case "$status" in
                 2*) extracted=none
                     for type in rss atom reddit; do
@@ -334,6 +324,20 @@ command_reviewable() {
             $dateclause
         }
         "
+}
+
+curl_headers_status() {
+    @coreutils/bin/cat "$@" |
+    @coreutils@/bin/tr -d '\r' |
+    @awk@/bin/awk '
+        BEGIN { statusLine = 1 }
+        statusLine {
+            status = $2
+            statusLine = 0
+        }
+        /^$/ { statusLine = 1 }
+        END { print status }
+        ')
 }
 
 fetch_one() {
