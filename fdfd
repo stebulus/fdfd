@@ -26,7 +26,8 @@ command_fetch() {
             echo "  amfd:fetch-url <$url> ;"
             now=$(timestamp)
             echo "  amfd:when-start $now ."
-            fetchdir=$(fetch_one "$url")
+            fetchdir=$(new_data_subdir)
+            fetch_one "$url" "$fetchdir"
             status=$(curl_headers_status "$fetchdir"/headers)
             case "$status" in
                 2*) extracted=none
@@ -342,9 +343,9 @@ curl_headers_status() {
 
 fetch_one() {
     local url fetchdir extra_curl_opts reddit_token
-    if [ $# -ne 1 ]; then exit_usage "fetch_one URL"; fi
+    if [ $# -ne 2 ]; then exit_usage "fetch_one URL DIR"; fi
     url=$1
-    fetchdir=$(new_data_subdir)
+    fetchdir=$2
     case "$url" in
         https://oauth.reddit.com/*)
             reddit_token=$(@jq@/bin/jq -r .access_token \
@@ -365,7 +366,6 @@ fetch_one() {
         --silent \
         ${extra_curl_opts:+"${extra_curl_opts[@]}"} \
         "$url"
-    echo "$fetchdir"
 }
 
 json_get() {
