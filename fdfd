@@ -20,13 +20,13 @@ command_feed() {
 command_fetch() {
     local url fetchdir now extracted status
     for url in "$@"; do
+        fetchdir=$(new_data_subdir)
         {
             preamble_turtle
             echo "<.> rdf:type amfd:fetch ;"
             echo "  amfd:fetch-url <$url> ;"
             now=$(timestamp)
             echo "  amfd:when-start $now ."
-            fetchdir=$(new_data_subdir)
             fetch_one "$url" "$fetchdir"
             status=$(curl_headers_status "$fetchdir"/headers)
             case "$status" in
