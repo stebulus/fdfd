@@ -4,16 +4,25 @@ me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
 here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
 
 cleanup() {
-    if [ -v itemsdir ]; then @coreutils@/bin/rm -rf "$itemsdir"; fi
-    if [ -v linksdir ]; then @coreutils@/bin/rm -rf "$linksdir"; fi
+    if [ -v tmp ]; then @coreutils@/bin/rm -rf "$tmp"; fi
 }
+unset -v tmp
 trap cleanup EXIT
+tmp=$(@coreutils@/bin/mktemp --tmpdir --directory "$me".XXXXXXXX)
+
+tmpsubdir() {
+    @coreutils@/bin/rm -rf "$tmp/$1"
+    @coreutils@/bin/mkdir "$tmp/$1"
+}
 
 for f in "$@"; do
-    itemsdir=$(@xml2@/bin/xml2 < "$f" | "$here"/xml2-pieces /feed/entry)
+    tmpsubdir items
+    @xml2@/bin/xml2 < "$f" |
+    "$here"/xml2-pieces /feed/entry "$tmp"/items/xx
     for g in "$itemsdir"/*; do
-        linksdir=$("$here"/xml2-pieces link "$g")
-        for h in "$linksdir"/*; do
+        tmpsubdir links
+        "$here"/xml2-pieces link "$g" "$tmp"/links/xx
+        for h in "$tmp"/links/*; do
             @awk@/bin/awk '
                 BEGIN { a["rel"] = "alternate" }
                 /^@/ {

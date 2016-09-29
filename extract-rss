@@ -4,14 +4,16 @@ me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
 here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
 
 cleanup() {
-    if [ -v itemsdir ]; then @coreutils@/bin/rm -rf "$itemsdir"; fi
+    if [ -v tmp ]; then @coreutils@/bin/rm -rf "$tmp"; fi
 }
+unset -v tmp
 trap cleanup EXIT
+tmp=$(@coreutils@/bin/mktemp --tmpdir --directory "$me".XXXXXXXX)
 
 for f in "$@"; do
-    itemsdir=$(@xml2@/bin/xml2 < "$f" |
-        "$here"/xml2-pieces /rss/channel/item)
-    for f in "$itemsdir"/*; do
+    @xml2@/bin/xml2 < "$f" |
+    "$here"/xml2-pieces /rss/channel/item "$tmp"/xx
+    for f in "$tmp"/xx*; do
         @coreutils@/bin/cat "$f" |
         while IFS='=' read k v; do
             case "$k" in
