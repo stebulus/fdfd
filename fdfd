@@ -143,10 +143,10 @@ command_merge() {
             echo "# $fullf"
             @coreutils@/bin/date +"# ${XSD_DATE_FMT}"
             @jena@/bin/turtle "$f"
-        } >"$dbdir/.new.$g"
-        @coreutils@/bin/mv "$dbdir/.new.$g" "$dbdir/$g"
+        } >"$dbdir/ff/.new.$g"
+        @coreutils@/bin/mv "$dbdir/ff/.new.$g" "$dbdir/ff/$g"
         s3ff=$(s3_facts_file)
-        @aws@/bin/aws s3 cp "$dbdir/$g" "$s3base/$s3ff"
+        @aws@/bin/aws s3 cp "$dbdir/ff/$g" "$s3base/$s3ff"
     done
 }
 
@@ -165,7 +165,7 @@ command_query() {
     dbdir=$1
     query=$2
     work=$(subtmpdir)
-    @coreutils@/bin/cat "$dbdir"/* >"$work"/all-facts.nt
+    @coreutils@/bin/cat "$dbdir"/ff/* >"$work"/all-facts.nt
     {
         preamble_sparql
         echo "$query"
