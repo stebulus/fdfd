@@ -336,7 +336,7 @@ command_reviewable() {
 }
 
 curl_headers_status() {
-    @coreutils/bin/cat "$@" |
+    @coreutils@/bin/cat "$@" |
     @coreutils@/bin/tr -d '\r' |
     @awk@/bin/awk '
         BEGIN { statusLine = 1 }
