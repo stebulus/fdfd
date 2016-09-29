@@ -18,38 +18,43 @@ command_feed() {
 }
 
 command_fetch() {
-    local url fetchdir now extracted status
+    local url fetchdir now extracted status s3base s3dir s3ff workdir
+    if [ $# -lt 1 ]; then exit_usage "fetch S3BASE [URL ...]"; fi
+    s3base=$1
+    shift
+    workdir=$(subtmpdir)
     for url in "$@"; do
-        fetchdir=$(new_data_subdir)
-        {
-            preamble_turtle
-            echo "<.> rdf:type amfd:fetch ;"
-            echo "  amfd:fetch-url <$url> ;"
-            now=$(timestamp)
-            echo "  amfd:when-start $now ."
-            fetch_one "$url" "$fetchdir"
-            status=$(curl_headers_status "$fetchdir"/headers)
-            case "$status" in
-                2*) extracted=none
-                    for type in rss atom reddit; do
-                        if "$here/extract-$type" "$fetchdir"/entity 2>/dev/null; then
-                            extracted=some
-                        fi
-                    done
-                    case "$extracted" in
-                        some) ;;
-                        none) echo "<.> amfd:error \"extract\" ." ;;
-                        *) echo "$me: internal error: extracted = $extracted" >&2
-                           ;;
-                    esac
-                    ;;
-                *)  echo "<.> amfd:error \"curl-${status:0:1}xx\" ."
-                    ;;
-            esac
-            now=$(timestamp)
-            echo "<.> amfd:when-end $now ."
-        } >"$fetchdir"/facts.ttl
-        echo "$fetchdir"/facts.ttl
+        @coreutils@/bin/rm -rf "$workdir"/fetch
+        @coreutils@/bin/mkdir "$workdir"/fetch
+        s3dir=$(s3_stash_dir "$url")
+        preamble_turtle
+        echo "@base <$s3base/$s3dir/> ."
+        echo "<.> rdf:type amfd:fetch ;"
+        echo "  amfd:fetch-url <$url> ;"
+        now=$(timestamp)
+        echo "  amfd:when-start $now ."
+        fetch_one "$url" "$workdir"/fetch
+        status=$(curl_headers_status "$workdir"/fetch/headers)
+        case "$status" in
+            2*) extracted=none
+                for type in rss atom reddit; do
+                    if "$here/extract-$type" "$workdir"/fetch/entity 2>/dev/null; then
+                        extracted=some
+                    fi
+                done
+                case "$extracted" in
+                    some) ;;
+                    none) echo "<.> amfd:error \"extract\" ." ;;
+                    *) echo "$me: internal error: extracted = $extracted" >&2
+                       ;;
+                esac
+                ;;
+            *)  echo "<.> amfd:error \"curl-${status:0:1}xx\" ."
+                ;;
+        esac
+        stash "$workdir"/fetch "$s3base/s3dir" >&2
+        now=$(timestamp)
+        echo "<.> amfd:when-end $now ."
     done
 }
 
@@ -125,6 +130,7 @@ command_merge() {
     if [ $# -lt 1 ]; then exit_usage "merge DBDIR [FILE ...]"; fi
     local dbdir
     dbdir=$1
+    s3base=$(@coreutils@/bin/cat "$dbdir"/s3base)
     shift
     if [ $# -eq 0 ]; then command_merge "$dbdir" -; fi
     for f in "$@"; do
@@ -139,6 +145,8 @@ command_merge() {
             @jena@/bin/turtle "$f"
         } >"$dbdir/.new.$g"
         @coreutils@/bin/mv "$dbdir/.new.$g" "$dbdir/$g"
+        s3ff=$(s3_facts_file)
+        @aws@/bin/aws s3 cp "$dbdir/$g" "$s3base/$s3ff"
     done
 }
 
@@ -406,6 +414,40 @@ preamble_sparql() {
 
 preamble_turtle() {
     preamble_raw | @sed@/bin/sed 's,.*,@prefix & .,'
+}
+
+s3_facts_file() {
+    local datepart chars
+    if [ $# -ne 0 ]; then exit_usage s3_facts_file; fi
+    datepart=$(@coreutils@/bin/date -u +%F |@coreutils@/bin/tr - /)
+    chars=$(nonce 10)
+    echo "facts/$datepart/$chars.ttl"
+}
+
+s3_stash_dir() {
+    local url datepart domain chars
+    if [ $# -ne 1 ]; then exit_usage "s3_stash_dir URL"; fi
+    url=$1
+    datepart=$(@coreutils@/bin/date -u +%F |@coreutils@/bin/tr - /)
+    domain=$(@sed@/bin/sed \
+        -e 's,^[^:]*://,,' \
+        -e 's,/.*$,,' \
+        <<< "$url")
+    chars=$(nonce 10)
+    echo "stash/$datepart/$domain/$chars"
+}
+
+stash() {
+    if [ $# -ne 2 ]; then exit_usage "stash dir s3dir"; fi
+    local dir s3dir
+    dir=${1%/}
+    s3dir=${2%/}
+    if [ -e "$dir"/stashed ]; then
+        echo "$me: already stashed: $dir" >&2
+        return 1
+    fi
+    @aws@/bin/aws s3 sync "$dir/" "$s3dir/"
+    echo "$s3dir/" >"$dir"/stashed
 }
 
 subtmpdir() {
