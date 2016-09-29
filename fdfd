@@ -18,35 +18,15 @@ command_feed() {
 }
 
 command_fetch() {
-    local url fetchdir now extracted status extra_curl_opts reddit_token
+    local url fetchdir now extracted status
     for url in "$@"; do
-        fetchdir=$(new_data_subdir)
         {
             preamble_turtle
             echo "<.> rdf:type amfd:fetch ;"
             echo "  amfd:fetch-url <$url> ;"
             now=$(timestamp)
             echo "  amfd:when-start $now ."
-            case "$url" in
-                https://oauth.reddit.com/*)
-                    reddit_token=$(@jq@/bin/jq -r .access_token \
-                        "$REDDIT_AUTH_FILE")
-                    extra_curl_opts=(
-                        -H "Authorization: Bearer $reddit_token"
-                        -A "$REDDIT_USER_AGENT"
-                    )
-                    ;;
-                *)  unset -v extra_curl_opts
-            esac
-            @curl@/bin/curl \
-                --compressed \
-                --dump-header "$fetchdir"/headers \
-                --location \
-                --output "$fetchdir"/entity \
-                --show-error \
-                --silent \
-                ${extra_curl_opts:+"${extra_curl_opts[@]}"} \
-                "$url"
+            fetchdir=$(fetch_one "$url")
             status=$(@coreutils@/bin/tr -d '\r' \
                 < "$fetchdir"/headers |
                 @awk@/bin/awk '
@@ -354,6 +334,34 @@ command_reviewable() {
             $dateclause
         }
         "
+}
+
+fetch_one() {
+    local url fetchdir extra_curl_opts reddit_token
+    if [ $# -ne 1 ]; then exit_usage "fetch_one URL"; fi
+    url=$1
+    fetchdir=$(new_data_subdir)
+    case "$url" in
+        https://oauth.reddit.com/*)
+            reddit_token=$(@jq@/bin/jq -r .access_token \
+                "$REDDIT_AUTH_FILE")
+            extra_curl_opts=(
+                -H "Authorization: Bearer $reddit_token"
+                -A "$REDDIT_USER_AGENT"
+            )
+            ;;
+        *)  unset -v extra_curl_opts
+    esac
+    @curl@/bin/curl \
+        --compressed \
+        --dump-header "$fetchdir"/headers \
+        --location \
+        --output "$fetchdir"/entity \
+        --show-error \
+        --silent \
+        ${extra_curl_opts:+"${extra_curl_opts[@]}"} \
+        "$url"
+    echo "$fetchdir"
 }
 
 json_get() {
