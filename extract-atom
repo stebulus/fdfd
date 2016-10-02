@@ -19,7 +19,7 @@ for f in "$@"; do
     tmpsubdir items
     @xml2@/bin/xml2 < "$f" |
     "$here"/xml2-pieces /feed/entry "$tmp"/items/xx
-    for g in "$itemsdir"/*; do
+    for g in "$tmp"/items/xx*; do
         tmpsubdir links
         "$here"/xml2-pieces link "$g" "$tmp"/links/xx
         for h in "$tmp"/links/*; do
