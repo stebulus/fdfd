@@ -63,7 +63,7 @@ command_fetchable() {
     local fence
     feedfence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "29 hours ago")
     redditfence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "7 hours ago")
-    longredditfence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "7 days ago")
+    longredditfence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "3 days ago")
     command_query "$1" "
         SELECT ?url
         WHERE { {
