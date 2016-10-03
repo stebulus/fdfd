@@ -61,7 +61,8 @@ command_fetch() {
 command_fetchable() {
     if [ $# -ne 1 ]; then exit_usage "fetchable DBDIR"; fi
     local fence
-    fence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "29 hours ago")
+    feedfence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "29 hours ago")
+    redditfence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "7 hours ago")
     longfence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "7 days ago")
     command_query "$1" "
         SELECT ?url
@@ -70,7 +71,7 @@ command_fetchable() {
             ?url a amfd:feed .
             FILTER NOT EXISTS {
                 ?url ^amfd:fetch-url/amfd:when-end ?time .
-                FILTER (?time > \"$fence\"^^xsd:dateTime)
+                FILTER (?time > \"$feedfence\"^^xsd:dateTime)
             }
             FILTER NOT EXISTS { ?url amfd:nope ?nope . }
         } UNION {
@@ -93,7 +94,7 @@ command_fetchable() {
         } UNION {
             # subreddits whose natural next page
             # either hasn't been fetched ever
-            # or was fetched only before fence and was empty then
+            # or was fetched only before redditfence and was empty then
             {
                 SELECT ?subreddit (MAX(?name) AS ?maxname)
                 WHERE {
@@ -117,7 +118,7 @@ command_fetchable() {
                 ?fetch amfd:fetch-url ?url .
                 {
                     ?fetch amfd:when-end ?time .
-                    FILTER (?time > \"$fence\"^^xsd:dateTime)
+                    FILTER (?time > \"$redditfence\"^^xsd:dateTime)
                 } UNION {
                     FILTER EXISTS { ?item dc:source ?fetch }
                 }
