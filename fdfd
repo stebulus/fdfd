@@ -63,7 +63,7 @@ command_fetchable() {
     local fence
     feedfence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "29 hours ago")
     redditfence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "7 hours ago")
-    longfence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "7 days ago")
+    longredditfence=$(@coreutils@/bin/date +"${XSD_DATE_FMT}" --date "7 days ago")
     command_query "$1" "
         SELECT ?url
         WHERE { {
@@ -75,7 +75,8 @@ command_fetchable() {
             }
             FILTER NOT EXISTS { ?url amfd:nope ?nope . }
         } UNION {
-            # subreddits that haven't been fetched since before longfence:
+            # subreddits that have produced no items
+            # since before longredditfence:
             # start over, just fetch current page of listings
             ?subreddit a amfd:subreddit ;
                 amfdr:subreddit-name ?subredditname .
@@ -83,7 +84,7 @@ command_fetchable() {
                 ?item a amfd:item ;
                     amfdr:subreddit ?subreddit ;
                     dc:source/amfd:when-end ?time .
-                FILTER (?time > \"$longfence\"^^xsd:dateTime)
+                FILTER (?time > \"$longredditfence\"^^xsd:dateTime)
             }
             FILTER NOT EXISTS { ?subreddit amfd:nope ?nope . }
             BIND (URI(CONCAT(
@@ -101,7 +102,7 @@ command_fetchable() {
                     ?item amfdr:item-name ?name ;
                         amfdr:subreddit ?subreddit ;
                         dc:source/amfd:when-end ?time .
-                    FILTER (?time > \"$longfence\"^^xsd:dateTime)
+                    FILTER (?time > \"$longredditfence\"^^xsd:dateTime)
                     FILTER NOT EXISTS { ?subreddit amfd:nope ?nope . }
                 }
                 GROUP BY ?subreddit
