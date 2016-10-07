@@ -57,7 +57,9 @@ command_explore() {
                     -iregex '.*\.html?$' \
                     -print0 |
                 @findutils@/bin/xargs -0 "$here"/extract-feed |
-                @sed@/bin/sed 's,.*,<&> a amfd:feed .,'
+                @awk@/bin/awk \
+                    -f "$here"/../lib/rdf.awk \
+                    --source '{ print rdfuri($0) " a amfd:feed ." }'
                 ;;
             *)  echo "<.> amfd:error \"wget-${wgetexit}\" ."
                 ;;

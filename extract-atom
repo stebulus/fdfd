@@ -36,7 +36,10 @@ for f in "$@"; do
                 }
                 ' "$h"
         done >>"$g"
-        @awk@/bin/awk -f "$here"/../lib/items.awk --source '
+        @awk@/bin/awk \
+            -f "$here"/../lib/rdf.awk \
+            -f "$here"/../lib/items.awk \
+            --source '
             $1 == "title" { stash("title") }
             $1 == "properlink" { stash("link") }
             $1 == "id" { stash("id") }

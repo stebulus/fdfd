@@ -24,7 +24,10 @@ for f in "$@"; do
             esac
             echo "$k=$v"
         done |
-        @awk@/bin/awk -f "$here"/../lib/items.awk --source '
+        @awk@/bin/awk \
+            -f "$here"/../lib/rdf.awk \
+            -f "$here"/../lib/items.awk \
+            --source '
             $1 == "title" { stash("title") }
             $1 == "link" { stash("link") }
             $1 == "guid" { stash("id") }
