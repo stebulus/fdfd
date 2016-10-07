@@ -73,8 +73,11 @@ command_explore() {
 command_feed() {
     if [ $# -gt 0 ]; then preamble_turtle; fi
     for url in "$@"; do
-        echo "<$url> a amfd:feed ."
-    done
+        echo "$url"
+    done |
+    @awk@/bin/awk \
+        -f "$here"/../lib/rdf.awk \
+        --source '{ print rdfuri($0) " a amfd:feed ." }'
 }
 
 command_fetch() {
