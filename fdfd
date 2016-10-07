@@ -331,10 +331,14 @@ command_review() {
 
 command_subreddit() {
     if [ $# -gt 0 ]; then preamble_turtle; fi
-    for r in "$@"; do
-        echo "<https://www.reddit.com/r/$r> a amfd:subreddit ;"
-        echo "    amfdr:subreddit-name \"$r\" ."
-    done
+    for r in "$@"; do echo "$r"; done |
+    @awk@/bin/awk --file "$here"/../lib/rdf.awk \
+        --source '{
+            name = rdfstr($0)
+            uri = rdfuri("https://www.reddit.com/r/" $0)
+            print uri " a amfd:subreddit ; "
+            print "    amfdr:subreddit-name " name
+        }'
 }
 
 command_postable() {
