@@ -214,9 +214,11 @@ command_merge() {
 command_nope() {
     local now
     if [ $# -ge 1 ]; then preamble_turtle; fi
-    for url in "$@"; do
+    for url in "$@"; do echo "$url"; done |
+    rdfuri |
+    while read uri; do
         now=$(timestamp)
-        echo "<$url> amfd:nope [ amfd:when $now ] ."
+        echo "$uri amfd:nope [ amfd:when $now ] ."
     done
 }
 
