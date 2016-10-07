@@ -57,9 +57,8 @@ command_explore() {
                     -iregex '.*\.html?$' \
                     -print0 |
                 @findutils@/bin/xargs -0 "$here"/extract-feed |
-                @awk@/bin/awk \
-                    -f "$here"/../lib/rdf.awk \
-                    --source '{ print rdfuri($0) " a amfd:feed ." }'
+                rdfuri |
+                while read uri; do echo "$uri a amfd:feed ."; done
                 ;;
             *)  echo "<.> amfd:error \"wget-${wgetexit}\" ."
                 ;;
@@ -72,12 +71,9 @@ command_explore() {
 
 command_feed() {
     if [ $# -gt 0 ]; then preamble_turtle; fi
-    for url in "$@"; do
-        echo "$url"
-    done |
-    @awk@/bin/awk \
-        -f "$here"/../lib/rdf.awk \
-        --source '{ print rdfuri($0) " a amfd:feed ." }'
+    for url in "$@"; do echo "$url"; done |
+    rdfuri |
+    while read uri; do echo "$uri a amfd:feed ."; done
 }
 
 command_fetch() {
@@ -479,6 +475,12 @@ preamble_sparql() {
 
 preamble_turtle() {
     preamble_raw | @sed@/bin/sed 's,.*,@prefix & .,'
+}
+
+rdfuri() {
+    @awk@/bin/awk --file "$here"/../lib/rdf.awk \
+        --source '{ print rdfuri($0) }' \
+        -- "$@"
 }
 
 s3_facts_file() {
