@@ -51,19 +51,18 @@ command_explore() {
             "$url"
         wgetexit=$?
         set -e
-        case "$wgetexit" in
-            0)  @findutils@/bin/find \
-                    "$workdir"/explore \
-                    -type f \
-                    -iregex '.*\.html?$' \
-                    -print0 |
-                @findutils@/bin/xargs -0 "$here"/extract-feed |
-                rdfuri |
-                while read uri; do echo "$uri a amfd:feed ."; done
-                ;;
-            *)  echo "<.> amfd:error \"wget-${wgetexit}\" ."
-                ;;
-        esac
+        if [ "$wgetexit" -eq 0 ] || [ "$wgetexit" -ge 5 ]; then
+            @findutils@/bin/find \
+                "$workdir"/explore \
+                -type f \
+                -iregex '.*\.html?$' \
+                -print0 |
+            @findutils@/bin/xargs -0 "$here"/extract-feed |
+            rdfuri |
+            while read uri; do echo "$uri a amfd:feed ."; done
+        else
+            echo "<.> amfd:error \"wget-${wgetexit}\" ."
+        fi
         stash "$workdir"/explore "$s3base/$s3dir" >&2
         now=$(timestamp)
         echo "<.> amfd:when-end $now ."
