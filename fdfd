@@ -41,6 +41,7 @@ command_explore() {
         set +e
         @wget@/bin/wget \
             --output-file="$workdir"/explore/wget.log \
+            --no-verbose \
             --force-directories \
             --directory-prefix="$workdir"/explore \
             --adjust-extension \
