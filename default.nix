@@ -10,6 +10,7 @@ in { awk ? nixpkgs.gawk
    , jq ? nixpkgs.jq
    , sed ? nixpkgs.gnused
    , stdenv ? nixpkgs.stdenv
+   , tagsoup ? import ./tagsoup.nix {}
    , wget ? nixpkgs.wget
    , xml2 ? nixpkgs.xml2
    }:
@@ -26,9 +27,11 @@ in { awk ? nixpkgs.gawk
              jena
              jq
              sed
+             tagsoup
              wget
              xml2;
      scripts = [ "extract-atom"
+                 "extract-feed"
                  "extract-reddit"
                  "extract-rss"
                  "fdfd"

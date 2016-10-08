@@ -1,0 +1,35 @@
+#!@bash@/bin/bash
+set -euo pipefail
+me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
+here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
+
+cleanup() {
+    if [ -v tmp ]; then @coreutils@/bin/rm -rf "$tmp"; fi
+}
+unset -v tmp
+trap cleanup EXIT
+tmp=$(@coreutils@/bin/mktemp --tmpdir --directory "$me".XXXXXXXX)
+
+for f in "$@"; do
+    @coreutils@/bin/rm -rf "$tmp"/pieces
+    @coreutils@/bin/mkdir "$tmp"/pieces
+    @tagsoup@/bin/tagsoup "$f" 2>/dev/null |
+    @xml2@/bin/xml2 |
+    "$here"/xml2-pieces /html/head/link "$tmp"/pieces/xx
+    while read short line; do
+        @coreutils@/bin/rm -f "$tmp/$short"
+        @grep@/bin/grep -lFx "$line" "$tmp"/pieces/xx* >"$tmp/$short" \
+            || true
+    done <<EOF
+alt @rel=alternate
+atom @type=application/atom+xml
+rss @type=application/rss+xml
+EOF
+    cat "$tmp"/pieces/*
+    {
+        LC_ALL=C @coreutils@/bin/join "$tmp"/alt "$tmp"/atom
+        LC_ALL=C @coreutils@/bin/join "$tmp"/alt "$tmp"/rss
+    } |
+    @coreutils@/bin/sort -u |
+    @findutils@/bin/xargs @sed@/bin/sed -ne '/^@href=/p'
+done
