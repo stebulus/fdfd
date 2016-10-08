@@ -45,7 +45,7 @@ command_explore() {
             --directory-prefix="$workdir"/explore \
             --adjust-extension \
             --recursive \
-            --level=2 \
+            --level=1 \
             --span-hosts \
             "$url"
         wgetexit=$?
