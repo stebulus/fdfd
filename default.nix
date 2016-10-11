@@ -11,7 +11,6 @@ in { awk ? nixpkgs.gawk
    , jq ? nixpkgs.jq
    , sed ? nixpkgs.gnused
    , stdenv ? nixpkgs.stdenv
-   , wget ? nixpkgs.wget
    , xml2 ? nixpkgs.xml2
    }:
    stdenv.mkDerivation {
@@ -31,7 +30,6 @@ in { awk ? nixpkgs.gawk
              jena
              jq
              sed
-             wget
              xml2;
      scripts = [ "extract-atom"
                  "extract-feed"

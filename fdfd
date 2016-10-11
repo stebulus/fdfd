@@ -23,8 +23,7 @@ command_explorable() {
 }
 
 command_explore() {
-    local url exploredir now extracted wgetexit s3base s3dir workdir
-    local finalurl
+    local url now s3base s3dir workdir finalurl
     if [ $# -lt 1 ]; then exit_usage "explore S3BASE [URL ...]"; fi
     s3base=$1
     shift
