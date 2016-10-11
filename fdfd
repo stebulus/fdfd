@@ -38,31 +38,12 @@ command_explore() {
         echo "  amfd:explore-url <$url> ;"
         now=$(timestamp)
         echo "  amfd:when-start $now ."
-        set +e
-        @wget@/bin/wget \
-            --output-file="$workdir"/explore/wget.log \
-            --no-verbose \
-            --force-directories \
-            --directory-prefix="$workdir"/explore \
-            --adjust-extension \
-            --recursive \
-            --level=1 \
-            --span-hosts \
-            "$url"
-        wgetexit=$?
-        set -e
-        if [ "$wgetexit" -eq 0 ] || [ "$wgetexit" -ge 5 ]; then
-            @findutils@/bin/find \
-                "$workdir"/explore \
-                -type f \
-                -iregex '.*\.html?$' \
-                -print0 |
-            @findutils@/bin/xargs -0 "$here"/extract-feed |
-            rdfuri |
-            while read uri; do echo "$uri a amfd:feed ."; done
-        else
-            echo "<.> amfd:error \"wget-${wgetexit}\" ."
-        fi
+        "$here"/bin/spider "$workdir"/explore "$url" |
+        while read d; do
+            "$here"/extract-feed "$d"/final-url "$d"/entity |
+            rdfuri
+        done |
+        while read uri; do echo "$uri a amfd:feed ."; done
         stash "$workdir"/explore "$s3base/$s3dir" >&2
         now=$(timestamp)
         echo "<.> amfd:when-end $now ."

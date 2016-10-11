@@ -5,6 +5,7 @@ in { awk ? nixpkgs.gawk
    , coreutils ? nixpkgs.coreutils
    , curl ? nixpkgs.curl.bin
    , findutils ? nixpkgs.findutils
+   , ghcWithPackages ? nixpkgs.haskellPackages.ghcWithPackages
    , grep ? nixpkgs.gnugrep
    , jena ? nixpkgs.apache-jena
    , jq ? nixpkgs.jq
@@ -17,6 +18,10 @@ in { awk ? nixpkgs.gawk
    stdenv.mkDerivation {
      name = "fdfd-0.1.0";
      src = ./.;
+     ghc = ghcWithPackages (pkgs: with pkgs;
+        [ network-uri
+          resourcet
+          tagstream-conduit ]);
      inherit awk
              bash
              bc
@@ -32,10 +37,13 @@ in { awk ? nixpkgs.gawk
              xml2;
      scripts = [ "extract-atom"
                  "extract-feed"
+                 "extract-links"
                  "extract-reddit"
                  "extract-rss"
                  "fdfd"
                  "fetch"
+                 "resolve-url"
+                 "spider"
                  "xml2-pieces" ];
      builder = builtins.toFile "builder.sh"
        ''

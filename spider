@@ -1,0 +1,123 @@
+#!@bash@/bin/bash
+set -euo pipefail
+me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
+here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
+
+if [ $# -lt 2 ]; then
+  echo "usage: $me targetdir url [url ...]" >&2
+  exit 2
+fi
+targetdir=$1
+shift
+
+cleanup() {
+    if [ -v tmp ]; then @coreutils@/bin/rm -rf "$tmp"; fi
+}
+trap cleanup EXIT
+tmp=$(@coreutils@/bin/mktemp --directory --tmpdir "$me".XXXXXXXX)
+
+fold() {
+    cmd=$1
+    zero=$2
+    while read x; do
+        zero=$("$cmd" "$zero" "$x")
+    done
+    echo "$zero"
+}
+
+fetch() {
+    url=$1
+    target=$2
+    @coreutils@/bin/mkdir -p "$target"
+    echo "$url" >"$target/initial-url"
+    @curl@/bin/curl \
+        --compressed \
+        --dump-header "$target/headers" \
+        --location \
+        --output "$target/entity" \
+        --show-error \
+        --silent \
+        "$url"
+    fetchtmp=$(@coreutils@/bin/mktemp --directory --tmpdir="$tmp" fetch.XXXXXXXX)
+    @coreutils@/bin/mkdir "$fetchtmp"/headerses
+    @coreutils@/bin/tr -d '\r' < "$target/headers" |
+    @coreutils@/bin/csplit \
+        --prefix "$fetchtmp/headerses/" \
+        - \
+        '/^$/+1' '{*}' \
+        >/dev/null
+    @coreutils@/bin/ls "$fetchtmp/headerses" |
+    @coreutils@/bin/sort -n |
+    while read h; do
+        @awk@/bin/awk '
+            NR == 1 {
+                match($0, /^HTTP\/[0-9\.]+ +([0-9]+) /, a)
+                status = a[1]
+            }
+            NR > 1 {
+                i = index($0, ":")
+                key = tolower(substr($0, 1, i))
+                if (key == "location:") {
+                    location = substr($0, i+1)
+                    sub(/^ */, "", location)
+                    exit
+                }
+            }
+            END {
+                if (status != "")
+                    print status, location
+            }
+            ' \
+            "$fetchtmp/headerses/$h"
+    done >"$fetchtmp/statuses"
+    statuscodes=$(@coreutils@/bin/cut -f1 -d' ' "$fetchtmp/statuses")
+    if ! @grep@/bin/grep -q '^\(3.. \)*2..$' <<< $statuscodes; then
+        echo "$me: bad status codes for $url: $statuscodes" >&2
+        echo error
+    elif ! @coreutils@/bin/head -n -1 "$fetchtmp/statuses" |
+            @coreutils@/bin/cut -f2- -d' ' |
+            fold "$here"/resolve-url "$url" \
+            >"$targetdir/$n/final-url"; then
+        echo "$me: couldn't compute final url for $url" >&2
+        echo error
+    else
+        echo okay
+    fi
+}
+
+echo 0 >"$tmp"/number_n
+number() {
+    local n
+    n=$(@coreutils@/bin/cat "$tmp"/number_n)
+    n=$((n+1))
+    echo "$n" >"$tmp"/number_n
+    echo "$n"
+}
+
+for url in "$@"; do
+    n=$(number)
+    result=$(fetch "$url" "$targetdir/$n")
+    case "$result" in
+        okay)
+            echo "$targetdir/$n"
+            finalurl=$(@coreutils@/bin/cat "$targetdir/$n/final-url")
+            "$here"/extract-links "$targetdir/$n/entity" |
+            while read link; do
+                n=$(number)
+                abslink=$("$here"/resolve-url "$finalurl" "$link")
+                subresult=$(fetch "$abslink" "$targetdir/$n")
+                case "$result" in
+                    okay) echo "$targetdir/$n" ;;
+                    error) ;;
+                    *)  echo "$me: internal error: weird result: $result" >&2
+                        exit 2
+                esac
+            done
+            ;;
+        error)
+            ;;
+        *)  echo "$me: internal error: weird result: $result" >&2
+            exit 2
+            ;;
+    esac
+done

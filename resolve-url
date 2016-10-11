@@ -1,0 +1,20 @@
+#!@ghc@/bin/runhaskell
+import Network.URI (parseURIReference)
+import Network.URI (relativeTo)
+import System.Environment (getArgs)
+import System.Environment (getProgName)
+import System.Exit (die)
+
+main = do
+    args <- getArgs
+    name <- getProgName
+    case args of
+        [base, url] ->
+            case (parseURIReference base, parseURIReference url) of
+                (Just base', Just url') ->
+                    print $ url' `relativeTo` base'
+                (Nothing, _) ->
+                    die $ name ++ ": invalid base url: " ++ base
+                (_, Nothing) ->
+                    die $ name ++ ": invalid second url: " ++ url
+        _ -> die $ "usage: " ++ name ++ " base url"
