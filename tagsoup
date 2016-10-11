@@ -1,4 +1,0 @@
-#!@bash@/bin/bash
-set -euo pipefail
-here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
-exec @jre@/bin/java -jar "$here"/../lib/tagsoup.jar "$@"

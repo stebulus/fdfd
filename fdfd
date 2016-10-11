@@ -24,6 +24,7 @@ command_explorable() {
 
 command_explore() {
     local url exploredir now extracted wgetexit s3base s3dir workdir
+    local finalurl
     if [ $# -lt 1 ]; then exit_usage "explore S3BASE [URL ...]"; fi
     s3base=$1
     shift
@@ -38,9 +39,11 @@ command_explore() {
         echo "  amfd:explore-url <$url> ;"
         now=$(timestamp)
         echo "  amfd:when-start $now ."
-        "$here"/bin/spider "$workdir"/explore "$url" |
+        "$here"/spider "$workdir"/explore "$url" |
         while read d; do
-            "$here"/extract-feed "$d"/final-url "$d"/entity |
+            finalurl=$(cat "$d"/final-url)
+            "$here"/extract-feed "$d"/entity |
+            @findutils@/bin/xargs -i "$here"/resolve-url "$finalurl" {} |
             rdfuri
         done |
         while read uri; do echo "$uri a amfd:feed ."; done
