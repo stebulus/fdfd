@@ -19,13 +19,12 @@ cleanup() {
 trap cleanup EXIT
 tmp=$(@coreutils@/bin/mktemp --tmpdir --directory "$me".XXXXXXXX)
 
-{
-    "$here"/fdfd fetchable "$dbdir" | @sed@/bin/sed 's,^,fetch ,'
-    "$here"/fdfd explorable "$dbdir" | @sed@/bin/sed 's,^,explore ,'
-} >"$tmp"/actionable
+"$here"/fdfd fetchable "$dbdir" >"$tmp"/fetchable
+"$here"/fdfd explorable "$dbdir" >"$tmp"/explorable
 
 # rate control to smooth out spikes in number of actions
-avail=$(@coreutils@/bin/wc -l <"$tmp"/actionable)
+avail=$(@coreutils/bin/cat "$tmp"/fetchable "$tmp"/explorable |
+    @coreutils@/bin/wc -l)
 if [ -e "$ratefile" ]; then
     oldrate=$(@coreutils@/bin/cat "$ratefile")
 else
@@ -41,7 +40,10 @@ else
 fi
 todo=$(echo "$newrate" |@awk@/bin/awk '{ print int($0+0.5) }')
 
-@coreutils@/bin/sort -R "$tmp"/actionable |
+{
+    @coreutils@/bin/sort -R "$tmp"/fetchable |@sed@/bin/sed 's,^,fetch ,'
+    @coreutils@/bin/sort -R "$tmp"/exporable |@sed@/bin/sed 's,^,explore ,'
+} |
 @sed@/bin/sed -n "1,${todo}p" |
 while read verb url; do
   if ! "$here"/fdfd "$verb" "$s3base" "$url" | "$here"/fdfd merge "$dbdir"; then
