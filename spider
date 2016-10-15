@@ -106,7 +106,7 @@ for url in "$@"; do
                 n=$(number)
                 abslink=$("$here"/resolve-url "$finalurl" "$link")
                 subresult=$(fetch "$abslink" "$targetdir/$n")
-                case "$result" in
+                case "$subresult" in
                     okay) echo "$targetdir/$n" ;;
                     error) ;;
                     *)  echo "$me: internal error: weird result: $result" >&2
