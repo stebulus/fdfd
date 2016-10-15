@@ -45,7 +45,9 @@ command_explore() {
             @findutils@/bin/xargs -i "$here"/resolve-url "$finalurl" {} |
             rdfuri
         done |
-        while read uri; do echo "$uri a amfd:feed ."; done
+        while read uri; do
+            echo "$uri a amfd:feed ; amfd:found-in <.> ."
+        done
         stash "$workdir"/explore "$s3base/$s3dir" >&2
         now=$(timestamp)
         echo "<.> amfd:when-end $now ."
