@@ -19,10 +19,13 @@ cleanup() {
 trap cleanup EXIT
 tmp=$(@coreutils@/bin/mktemp --tmpdir --directory "$me".XXXXXXXX)
 
-"$here"/fdfd fetchable "$dbdir" >"$tmp"/fetchable
+{
+    "$here"/fdfd fetchable "$dbdir" | @sed@/bin/sed 's,^,fetch ,'
+    "$here"/fdfd explorable "$dbdir" | @sed@/bin/sed 's,^,explore ,'
+} >"$tmp"/actionable
 
-# rate control to smooth out spikes in number of fetchable feeds
-avail=$(@coreutils@/bin/wc -l <"$tmp"/fetchable)
+# rate control to smooth out spikes in number of actions
+avail=$(@coreutils@/bin/wc -l <"$tmp"/actionable)
 if [ -e "$ratefile" ]; then
     oldrate=$(@coreutils@/bin/cat "$ratefile")
 else
@@ -35,12 +38,12 @@ if [ "$avail" -gt 0 ]; then
 else
     newrate=$oldrate
 fi
-tofetch=$(echo "$newrate" |@awk@/bin/awk '{ print int($0+0.5) }')
+todo=$(echo "$newrate" |@awk@/bin/awk '{ print int($0+0.5) }')
 
-@coreutils@/bin/sort -R "$tmp"/fetchable |
-@sed@/bin/sed -n "1,${tofetch}p" |
-while read url; do
-  if ! "$here"/fdfd fetch "$s3base" "$url" | "$here"/fdfd merge "$dbdir"; then
-    echo "$me: error fetching & merging $url" >&2
+@coreutils@/bin/sort -R "$tmp"/actionable |
+@sed@/bin/sed -n "1,${todo}p" |
+while read verb url; do
+  if ! "$here"/fdfd "$verb" "$s3base" "$url" | "$here"/fdfd merge "$dbdir"; then
+    echo "$me: error doing: $verb $url" >&2
   fi
 done
