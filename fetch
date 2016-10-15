@@ -32,7 +32,8 @@ else
     oldrate=$DEFAULT_RATE
 fi
 if [ "$avail" -gt 0 ]; then
-    newrate=$(@coreutils@/bin/echo "0.99*$oldrate + 0.01*$avail" |
+    newrate=$(@coreutils@/bin/echo \
+        "x=0.99*$oldrate + 0.01*$avail; if (x > 10) 10.0 else x" |
         @bc@/bin/bc -l)
     echo "$newrate" >"$ratefile"
 else
