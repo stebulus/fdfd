@@ -42,7 +42,7 @@ todo=$(echo "$newrate" |@awk@/bin/awk '{ print int($0+0.5) }')
 
 {
     @coreutils@/bin/sort -R "$tmp"/fetchable |@sed@/bin/sed 's,^,fetch ,'
-    @coreutils@/bin/sort -R "$tmp"/exporable |@sed@/bin/sed 's,^,explore ,'
+    @coreutils@/bin/sort -R "$tmp"/explorable |@sed@/bin/sed 's,^,explore ,'
 } |
 @sed@/bin/sed -n "1,${todo}p" |
 while read verb url; do
