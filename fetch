@@ -4,7 +4,7 @@ me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
 here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
 
 DEFAULT_RATE=1
-MAX_RATE=5
+MAX_RATE=6
 
 if [ $# -ne 2 ]; then
     echo "usage: $me DBDIR RATEFILE" >&2
