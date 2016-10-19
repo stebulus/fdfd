@@ -3,7 +3,8 @@ set -euo pipefail
 me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
 here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
 
-DEFAULT_RATE=5
+DEFAULT_RATE=1
+MAX_RATE=5
 
 if [ $# -ne 2 ]; then
     echo "usage: $me DBDIR RATEFILE" >&2
@@ -32,7 +33,7 @@ else
 fi
 if [ "$avail" -gt 0 ]; then
     newrate=$(@coreutils@/bin/echo \
-        "x=0.99*$oldrate + 0.01*$avail; if (x > 10) 10.0 else x" |
+        "x=0.99*$oldrate + 0.01*$avail; if (x > $MAX_RATE) $MAX_RATE else x" |
         @bc@/bin/bc -l)
     echo "$newrate" >"$ratefile"
 else
