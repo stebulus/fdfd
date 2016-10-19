@@ -179,6 +179,8 @@ command_merge() {
     s3base=$(@coreutils@/bin/cat "$dbdir"/s3base)
     shift
     if [ $# -eq 0 ]; then command_merge "$dbdir" -; fi
+    @coreutils@/bin/mkdir -p "$dbdir"/tdb
+    work=$(subtmpdir)
     for f in "$@"; do
         case "$f" in
             -) fullf="<stdin>" ;;
@@ -188,11 +190,12 @@ command_merge() {
         {
             echo "# $fullf"
             @coreutils@/bin/date +"# ${XSD_DATE_FMT}"
-            @jena@/bin/turtle "$f"
-        } >"$dbdir/ff/.new.$g"
-        @coreutils@/bin/mv "$dbdir/ff/.new.$g" "$dbdir/ff/$g"
+            @coreutils@/bin/cat "$f"
+        } >"$work"/merge.ttl
+        @jena@/bin/turtle "$work"/merge.ttl >"$work"/merge.nt
         s3ff=$(s3_facts_file)
-        /usr/bin/aws s3 cp "$dbdir/ff/$g" "$s3base/$s3ff"
+        /usr/bin/aws s3 cp "$work"/merge.ttl "$s3base/$s3ff"
+        @jena@/bin/tdbloader --loc="$dbdir"/tdb "$work"/merge.nt
     done
 }
 
@@ -213,15 +216,14 @@ command_query() {
     dbdir=$1
     query=$2
     work=$(subtmpdir)
-    @coreutils@/bin/cat "$dbdir"/ff/* >"$work"/all-facts.nt
     {
         preamble_sparql
         echo "$query"
     } >"$work"/query.rq
-    @jena@/bin/sparql \
-        --results json \
-        --data "$work"/all-facts.nt \
-        --query "$work"/query.rq
+    @jena@/bin/tdbquery \
+        --loc="$dbdir"/tdb \
+        --query="$work"/query.rq \
+        --results=json
 }
 
 command_reddit_auth() {
