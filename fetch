@@ -3,15 +3,13 @@ set -euo pipefail
 me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
 here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
 
-DEFAULT_RATE=1
-MAX_RATE=6
-
-if [ $# -ne 2 ]; then
-    echo "usage: $me DBDIR RATEFILE" >&2
+if [ $# -ne 3 ]; then
+    echo "usage: $me DBDIR RATEFILE MAXRATE" >&2
     exit 2
 fi
 dbdir=$1
 ratefile=$2
+maxrate=$3
 s3base=$(@coreutils@/bin/cat "$dbdir"/s3base)
 
 cleanup() {
@@ -29,11 +27,11 @@ avail=$(@coreutils@/bin/cat "$tmp"/fetchable "$tmp"/explorable |
 if [ -e "$ratefile" ]; then
     oldrate=$(@coreutils@/bin/cat "$ratefile")
 else
-    oldrate=$DEFAULT_RATE
+    oldrate=$(echo "$maxrate*0.5" |@bc@/bin/bc -l)
 fi
 if [ "$avail" -gt 0 ]; then
     newrate=$(@coreutils@/bin/echo \
-        "x=0.99*$oldrate + 0.01*$avail; if (x > $MAX_RATE) $MAX_RATE else x" |
+        "x=0.99*$oldrate + 0.01*$avail; if (x > $maxrate) $maxrate else x" |
         @bc@/bin/bc -l)
     echo "$newrate" >"$ratefile"
 else
