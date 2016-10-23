@@ -31,13 +31,15 @@ in { awk ? nixpkgs.gawk
              jq
              sed
              xml2;
-     scripts = [ "extract-atom"
+     scripts = [ "cpu-credits"
+                 "extract-atom"
                  "extract-feed"
                  "extract-links"
                  "extract-reddit"
                  "extract-rss"
                  "fdfd"
                  "fetch"
+                 "instance-id"
                  "resolve-url"
                  "spider"
                  "xml2-pieces" ];

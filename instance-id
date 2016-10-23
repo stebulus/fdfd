@@ -1,0 +1,11 @@
+#!@bash@/bin/bash
+set -euo pipefail
+if [ ! -e /tmp/instance-id ]; then
+    trap 'if [ -v tmp ]; then @coreutils@/bin/rm "$tmp"; fi' EXIT
+    tmp=$(@coreutils@/bin/mktemp /tmp/instance-id.new.XXXXXXXX)
+    @curl@/bin/curl --silent --show-error \
+        http://169.254.169.254/latest/meta-data/instance-id \
+        > "$tmp"
+    @coreutils@/bin/mv "$tmp" /tmp/instance-id
+fi
+cat /tmp/instance-id

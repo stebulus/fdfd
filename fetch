@@ -24,6 +24,11 @@ tmp=$(@coreutils@/bin/mktemp --tmpdir --directory "$me".XXXXXXXX)
 # rate control to smooth out spikes in number of actions
 avail=$(@coreutils@/bin/cat "$tmp"/fetchable "$tmp"/explorable |
     @coreutils@/bin/wc -l)
+credits=$("$here"/cpu-credits)
+creditsfactor=$(echo "
+    x = ($credits - 50)/(100 - 50)
+    if (x < 0) y=0 else if (x > 1) y=1 else y=x
+    y " | @bc@/bin/bc -l)
 if [ -e "$ratefile" ]; then
     oldrate=$(@coreutils@/bin/cat "$ratefile")
 else
@@ -32,6 +37,7 @@ fi
 if [ "$avail" -gt 0 ]; then
     newrate=$(@coreutils@/bin/echo "
         if ($avail > $maxrate) goal=$maxrate else goal=$avail
+        goal=goal*$creditsfactor
         if ($oldrate > $maxrate) curr=$maxrate else if ($oldrate < 1.0) curr=1.0 else curr=$oldrate
         0.99*curr + 0.01*goal
         " | @bc@/bin/bc -l)
