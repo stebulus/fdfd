@@ -37,11 +37,16 @@ fi
 newrate=$(@coreutils@/bin/echo "
     if ($avail > $maxrate) goal=$maxrate else goal=$avail
     goal=goal*$creditsfactor
-    if ($oldrate > $maxrate) curr=$maxrate else if ($oldrate < 1.0) curr=1.0 else curr=$oldrate
+    if ($oldrate > $maxrate) curr=$maxrate else curr=$oldrate
     0.99*curr + 0.01*goal
     " | @bc@/bin/bc -l)
 echo "$newrate" >"$ratefile"
-todo=$(echo "$newrate" |@awk@/bin/awk '{ print int($0+0.5) }')
+todo=$(echo "$newrate" |
+    @awk@/bin/awk '{
+        intpart = int($0)
+        fracpart = $0 - n
+        print intpart + (rand() < fracpart)
+    }')
 
 {
     @coreutils@/bin/sort -R "$tmp"/fetchable |@sed@/bin/sed 's,^,fetch ,'
