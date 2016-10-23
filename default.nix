@@ -2,6 +2,7 @@ let nixpkgs = import <nixpkgs> {};
 in { awk ? nixpkgs.gawk
    , bash ? nixpkgs.bash
    , bc ? nixpkgs.bc
+   , bundler ? nixpkgs.bundler
    , coreutils ? nixpkgs.coreutils
    , curl ? nixpkgs.curl.bin
    , findutils ? nixpkgs.findutils
@@ -24,6 +25,7 @@ in { awk ? nixpkgs.gawk
      inherit awk
              bash
              bc
+             bundler
              coreutils
              curl
              findutils

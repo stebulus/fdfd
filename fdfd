@@ -214,7 +214,8 @@ command_post() {
     if [ $# -ne 2 ]; then exit_usage "post DBDIR URL"; fi
     dbdir=$1
     url=$2
-    tweet=$(@t@/bin/t update "$url" |
+    gempath=$(@coreutils@/bin/ls -d @bundler@/lib/ruby/gems/*)
+    tweet=$(GEM_PATH="$gempath" @t@/bin/t update "$url" |
         @grep@/bin/grep -o "t delete status [[:digit:]]*" |
         @coreutils@/bin/cut -d' ' -f4)
     preamble_turtle
