@@ -210,6 +210,20 @@ command_nope() {
     done
 }
 
+command_post() {
+    if [ $# -ne 2 ]; then exit_usage "post DBDIR URL"; fi
+    dbdir=$1
+    url=$2
+    tweet=$(@t@/bin/t update "$url" |
+        @grep@/bin/grep -o "t delete status [[:digit:]]*" |
+        @coreutils@/bin/cut -d' ' -f4)
+    preamble_turtle
+    rdfu=$(echo "$url" | rdfuri)
+    now=$(timestamp)
+    echo "$rdfu amfd:post [ amfd:tweet \"$tweet\" ; amfd:when $now ] ." |
+    command_merge "$dbdir"
+}
+
 command_query() {
     if [ $# -ne 2 ]; then exit_usage "query DBDIR QUERY"; fi
     local dbdir query work
@@ -474,6 +488,7 @@ preamble_turtle() {
 }
 
 rdfuri() {
+    set -e
     @awk@/bin/awk --file "$here"/../lib/rdf.awk \
         --source '{ print rdfuri($0) }' \
         -- "$@"
