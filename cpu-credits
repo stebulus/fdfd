@@ -1,0 +1,27 @@
+#!@bash@/bin/bash
+set -euo pipefail
+here=$(@coreutils@/bin/dirname "${BASH_SOURCE[0]}")
+me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
+inst=$("$here"/instance-id)
+starttime=$(@coreutils@/bin/date -Is -u --date='-15 minutes')
+endtime=$(@coreutils@/bin/date -Is -u)
+/usr/bin/aws cloudwatch get-metric-statistics \
+    --namespace AWS/EC2 \
+    --metric-name CPUCreditBalance \
+    --start-time "$starttime" \
+    --end-time "$endtime" \
+    --statistics Average \
+    --dimensions Name=InstanceId,Value="$inst" \
+    --period 300 |
+@jq@/bin/jq -r '.Datapoints | .[] | "\(.Timestamp) \(.Average)"' |
+@coreutils@/bin/sort |
+@coreutils@/bin/cut -d' ' -f2 |
+@coreutils@/bin/tail -n1 |
+@awk@/bin/awk -v me="$me" '
+    { print }
+    END {
+      if (NR == 0) {
+        print me ": no datapoints" >"/dev/stderr"
+        exit 1
+      }
+    }'
