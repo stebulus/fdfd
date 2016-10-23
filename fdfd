@@ -224,6 +224,21 @@ command_post() {
     command_merge "$dbdir"
 }
 
+command_postable() {
+    if [ $# -ne 1 ]; then exit_usage "postable DBDIR"; fi
+    command_query "$1" '
+        SELECT ?link ?title ?sourceurl ?date
+        WHERE {
+            ?item a amfd:item ; amfd:link ?link .
+            ?link amfd:review/amfd:worth-posting true .
+            OPTIONAL { ?item dc:title ?title }
+            OPTIONAL { ?item dc:source/amfd:fetch-url ?sourceurl }
+            OPTIONAL { ?item dc:date ?date }
+            FILTER NOT EXISTS { ?link amfd:post ?post }
+        }
+        '
+}
+
 command_query() {
     if [ $# -ne 2 ]; then exit_usage "query DBDIR QUERY"; fi
     local dbdir query work
@@ -330,33 +345,6 @@ command_review() {
         '
 }
 
-command_subreddit() {
-    if [ $# -gt 0 ]; then preamble_turtle; fi
-    for r in "$@"; do echo "$r"; done |
-    @awk@/bin/awk --file "$here"/../lib/rdf.awk \
-        --source '{
-            name = rdfstr($0)
-            uri = rdfuri("https://www.reddit.com/r/" $0)
-            print uri " a amfd:subreddit ; "
-            print "    amfdr:subreddit-name " name
-        }'
-}
-
-command_postable() {
-    if [ $# -ne 1 ]; then exit_usage "postable DBDIR"; fi
-    command_query "$1" '
-        SELECT ?link ?title ?sourceurl ?date
-        WHERE {
-            ?item a amfd:item ; amfd:link ?link .
-            ?link amfd:review/amfd:worth-posting true .
-            OPTIONAL { ?item dc:title ?title }
-            OPTIONAL { ?item dc:source/amfd:fetch-url ?sourceurl }
-            OPTIONAL { ?item dc:date ?date }
-            FILTER NOT EXISTS { ?link amfd:post ?post }
-        }
-        '
-}
-
 command_reviewable() {
     local dbdir dateclause
     case $# in
@@ -401,6 +389,18 @@ command_reviewable() {
             $dateclause
         }
         "
+}
+
+command_subreddit() {
+    if [ $# -gt 0 ]; then preamble_turtle; fi
+    for r in "$@"; do echo "$r"; done |
+    @awk@/bin/awk --file "$here"/../lib/rdf.awk \
+        --source '{
+            name = rdfstr($0)
+            uri = rdfuri("https://www.reddit.com/r/" $0)
+            print uri " a amfd:subreddit ; "
+            print "    amfdr:subreddit-name " name
+        }'
 }
 
 curl_headers_status() {
