@@ -43,11 +43,14 @@ newrate=$(@coreutils@/bin/echo "
     " | @bc@/bin/bc -l)
 echo "$newrate" >"$ratefile"
 todo=$(echo "$newrate" |
-    @awk@/bin/awk '{
-        intpart = int($0)
-        fracpart = $0 - intpart
-        print intpart + (rand() < fracpart)
-    }')
+    @awk@/bin/awk '
+        BEGIN { srand() }
+        {
+            intpart = int($0)
+            fracpart = $0 - intpart
+            print intpart + (rand() < fracpart)
+        }
+    ')
 
 {
     @coreutils@/bin/sort -R "$tmp"/fetchable |@sed@/bin/sed 's,^,fetch ,'
