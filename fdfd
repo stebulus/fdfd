@@ -247,8 +247,8 @@ command_postauto() {
     dbdir=$1
     command_postable "$dbdir" |
     @jq@/bin/jq -r '.results.bindings | .[] |
-        "\(.time.value)\t\(.link.value)"' |
-    @coreutils@/bin/sort |
+        "\(.date.value)\t\(.link.value)"' |
+    @coreutils@/bin/sort -u |
     @coreutils@/bin/tail -n1 |
     @coreutils@/bin/cut -f2 |
     while read -r url; do
