@@ -390,6 +390,7 @@ command_reviewable() {
 }
 
 curl_headers_status() {
+    set -e
     @coreutils@/bin/cat "$@" |
     @coreutils@/bin/tr -d '\r' |
     @awk@/bin/awk '
@@ -431,6 +432,7 @@ fetch_one() {
 }
 
 json_get() {
+    set -e
     key=$1
     file=$2
     @jq@/bin/jq -r \
@@ -449,6 +451,7 @@ new_data_subdir() {
 }
 
 nonce() {
+    set -e
     @coreutils@/bin/dd if=/dev/urandom count="$1" bs=1 2>/dev/null |
     @coreutils@/bin/base32 |
     @coreutils@/bin/tr A-Z a-z
@@ -477,6 +480,7 @@ rdfuri() {
 }
 
 s3_facts_file() {
+    set -e
     local datepart chars
     if [ $# -ne 0 ]; then exit_usage s3_facts_file; fi
     datepart=$(@coreutils@/bin/date -u +%F |@coreutils@/bin/tr - /)
@@ -485,6 +489,7 @@ s3_facts_file() {
 }
 
 s3_stash_dir() {
+    set -e
     local url datepart domain chars
     if [ $# -ne 1 ]; then exit_usage "s3_stash_dir URL"; fi
     url=$1
@@ -511,6 +516,7 @@ stash() {
 }
 
 subtmpdir() {
+    set -e
     local name
     name=$(nonce 5)
     @coreutils@/bin/mkdir "$tmp/$name"
@@ -518,6 +524,7 @@ subtmpdir() {
 }
 
 timestamp() {
+    set -e
     @coreutils@/bin/date +"\"${XSD_DATE_FMT}\"^^xsd:dateTime"
 }
 

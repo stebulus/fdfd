@@ -26,6 +26,7 @@ fold() {
 }
 
 fetch() {
+    set -e
     url=$1
     target=$2
     @coreutils@/bin/mkdir -p "$target"
@@ -87,6 +88,7 @@ fetch() {
 
 echo 0 >"$tmp"/number_n
 number() {
+    set -e
     local n
     n=$(@coreutils@/bin/cat "$tmp"/number_n)
     n=$((n+1))
