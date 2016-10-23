@@ -45,7 +45,7 @@ echo "$newrate" >"$ratefile"
 todo=$(echo "$newrate" |
     @awk@/bin/awk '{
         intpart = int($0)
-        fracpart = $0 - n
+        fracpart = $0 - intpart
         print intpart + (rand() < fracpart)
     }')
 
