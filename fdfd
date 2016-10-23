@@ -40,7 +40,7 @@ command_explore() {
         echo "  amfd:when-start $now ."
         "$here"/spider "$workdir"/explore "$url" |
         while read d; do
-            finalurl=$(cat "$d"/final-url)
+            finalurl=$(@coreutils@/bin/cat "$d"/final-url)
             "$here"/extract-feed "$d"/entity |
             @findutils@/bin/xargs -i "$here"/resolve-url "$finalurl" {} |
             rdfuri
