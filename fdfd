@@ -518,9 +518,7 @@ subtmpdir() {
 }
 
 timestamp() {
-    local now
-    now=$(@coreutils@/bin/date +"${XSD_DATE_FMT}")
-    echo "\"$now\"^^xsd:dateTime"
+    @coreutils@/bin/date +"\"${XSD_DATE_FMT}\"^^xsd:dateTime"
 }
 
 exit_usage() {
