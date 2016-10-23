@@ -218,11 +218,12 @@ command_post() {
     tweet=$(GEM_PATH="$gempath" @t@/bin/t update "$url" |
         @grep@/bin/grep -o "t delete status [[:digit:]]*" |
         @coreutils@/bin/cut -d' ' -f4)
-    preamble_turtle
     rdfu=$(echo "$url" | rdfuri)
     now=$(timestamp)
-    echo "$rdfu amfd:post [ amfd:tweet \"$tweet\" ; amfd:when $now ] ." |
-    command_merge "$dbdir"
+    {
+        preamble_turtle
+        echo "$rdfu amfd:post [ amfd:tweet \"$tweet\" ; amfd:when $now ] ."
+    } | command_merge "$dbdir"
 }
 
 command_postable() {
