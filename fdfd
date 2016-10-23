@@ -239,6 +239,21 @@ command_postable() {
         '
 }
 
+command_postauto() {
+    if [ $# -ne 1 ]; then exit_usage "postauto DBDIR"; fi
+    local dbdir
+    dbdir=$1
+    command_postable "$dbdir" |
+    @jq@/bin/jq -r '.results.bindings | .[] |
+        "\(.time.value)\t\(.link.value)"' |
+    @coreutils@/bin/sort |
+    @coreutils@/bin/tail -n1 |
+    @coreutils@/bin/cut -f2 |
+    while read -r url; do
+        command_post "$dbdir" "$url"
+    done
+}
+
 command_query() {
     if [ $# -ne 2 ]; then exit_usage "query DBDIR QUERY"; fi
     local dbdir query work
