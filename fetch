@@ -38,7 +38,7 @@ newrate=$(@coreutils@/bin/echo "
     if ($avail > $maxrate) goal=$maxrate else goal=$avail
     goal=goal*$creditsfactor
     if ($oldrate > $maxrate) curr=$maxrate else curr=$oldrate
-    if (curr > goal) t=0.5 else t=0.01
+    if (curr > goal) t=0.5 else t=0.1
     (1-t)*curr + t*goal
     " | @bc@/bin/bc -l)
 echo "$newrate" >"$ratefile"
