@@ -39,15 +39,21 @@ command_explore() {
         now=$(timestamp)
         echo "  amfd:when-start $now ."
         "$here"/spider "$workdir"/explore "$url" |
-        while read d; do
+        @coreutils@/bin/nl |
+        while read n d; do
+            if [ "$n" -eq 1 ]; then
+                rdfs=$("$here"/extract-title "$d"/entity | rdfstr)
+                rdfu=$(echo "$url" | rdfuri)
+                echo "$rdfu dc:title $s ."
+            fi
             finalurl=$(@coreutils@/bin/cat "$d"/final-url)
             "$here"/extract-feed "$d"/entity |
             @findutils@/bin/xargs -i "$here"/resolve-url "$finalurl" {} |
-            rdfuri
+            rdfuri |
+            while read uri; do
+                echo "$uri a amfd:feed ; amfd:found-in <.> ."
+            done
         done |
-        while read uri; do
-            echo "$uri a amfd:feed ; amfd:found-in <.> ."
-        done
         stash "$workdir"/explore "$s3base/$s3dir" >&2
         now=$(timestamp)
         echo "<.> amfd:when-end $now ."
@@ -211,14 +217,25 @@ command_nope() {
 }
 
 command_post() {
+    local dbdir now rdfu s3base title tweet url
     if [ $# -ne 2 ]; then exit_usage "post DBDIR URL"; fi
     dbdir=$1
     url=$2
     gempath=$(@coreutils@/bin/ls -d @bundler@/lib/ruby/gems/*)
-    tweet=$(GEM_PATH="$gempath" @t@/bin/t update "$url" |
+    rdfu=$(echo "$url" | rdfuri)
+    title=$(command_query "$dbdir" \
+        "SELECT ?title WHERE { $rdfu dc:title ?title } LIMIT 1" |
+        @jq@/bin/jq -r '.results.bindings | .[] | .title.value')
+    if [ -z "$title" ]; then
+        s3base=$(cat "$dbdir"/s3base)
+        command_explore "$s3base" "$url" | command_merge "$dbdir"
+        title=$(command_query "$dbdir" \
+            "SELECT ?title WHERE { $rdfu dc:title ?title } LIMIT 1" |
+            @jq@/bin/jq -r '.results.bindings | .[] | .title.value')
+    fi
+    tweet=$(GEM_PATH="$gempath" @t@/bin/t update "${title:0:100} $url" |
         @grep@/bin/grep -o "t delete status [[:digit:]]*" |
         @coreutils@/bin/cut -d' ' -f4)
-    rdfu=$(echo "$url" | rdfuri)
     now=$(timestamp)
     {
         preamble_turtle
@@ -502,6 +519,13 @@ preamble_sparql() {
 
 preamble_turtle() {
     preamble_raw | @sed@/bin/sed 's,.*,@prefix & .,'
+}
+
+rdfstr() {
+    set -e
+    @awk@/bin/awk --file "$here"/../lib/rdf.awk \
+        --source '{ print rdfstr($0) }' \
+        -- "$@"
 }
 
 rdfuri() {

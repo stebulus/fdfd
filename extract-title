@@ -1,0 +1,38 @@
+#!@ghc@/bin/runhaskell
+{-# LANGUAGE OverloadedStrings #-}
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Trans.Resource (runResourceT)
+import qualified Data.ByteString.Char8 as B
+import           Data.Conduit ((=$=))
+import           Data.Conduit (runConduit)
+import           Data.Conduit.Binary (sourceFile)
+import qualified Data.Conduit.Combinators as C
+import qualified Data.Conduit.List as L
+import           System.Environment (getArgs)
+import           Text.HTML.TagStream.ByteString (tokenStream)
+import           Text.HTML.TagStream.Types (Token'(..))
+
+main = mapM_ (runResourceT . runConduit . conduit) =<< getArgs
+
+conduit filename =
+    sourceFile filename
+    =$= tokenStream
+    =$= element "title"
+    =$= L.map text
+    =$= L.catMaybes
+    =$= L.map (B.map unline)
+    =$= L.mapM_ (liftIO . B.putStrLn)
+
+element s = C.dropWhile (not . start s) >> C.takeWhile (not . end s)
+
+start s (TagOpen t _ _) = s == t
+start _ _ = False
+
+end s (TagClose t) = s == t
+end _ _ = False
+
+text (Text t) = Just t
+text _ = Nothing
+
+unline '\n' = ' '
+unline x = x

@@ -19,7 +19,8 @@ in { awk ? nixpkgs.gawk
      name = "fdfd-0.1.0";
      src = ./.;
      ghc = ghcWithPackages (pkgs: with pkgs;
-        [ network-uri
+        [ conduit-combinators
+          network-uri
           resourcet
           tagstream-conduit ]);
      inherit awk
@@ -41,6 +42,7 @@ in { awk ? nixpkgs.gawk
                  "extract-links"
                  "extract-reddit"
                  "extract-rss"
+                 "extract-title"
                  "fdfd"
                  "fetch"
                  "instance-id"
