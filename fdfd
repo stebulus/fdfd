@@ -44,7 +44,7 @@ command_explore() {
             if [ "$n" -eq 1 ]; then
                 rdfs=$("$here"/extract-title "$d"/entity | rdfstr)
                 rdfu=$(echo "$url" | rdfuri)
-                echo "$rdfu dc:title $s ."
+                echo "$rdfu dc:title $rdfs ."
             fi
             finalurl=$(@coreutils@/bin/cat "$d"/final-url)
             "$here"/extract-feed "$d"/entity |
