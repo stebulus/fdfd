@@ -48,6 +48,7 @@ in { awk ? nixpkgs.gawk
                  "instance-id"
                  "resolve-url"
                  "spider"
+                 "statloc"
                  "xml2-pieces" ];
      builder = builtins.toFile "builder.sh"
        ''

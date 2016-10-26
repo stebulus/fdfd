@@ -40,37 +40,7 @@ fetch() {
         --silent \
         "$url"
     fetchtmp=$(@coreutils@/bin/mktemp --directory --tmpdir="$tmp" fetch.XXXXXXXX)
-    @coreutils@/bin/mkdir "$fetchtmp"/headerses
-    @coreutils@/bin/tr -d '\r' < "$target/headers" |
-    @coreutils@/bin/csplit \
-        --prefix "$fetchtmp/headerses/" \
-        - \
-        '/^$/+1' '{*}' \
-        >/dev/null
-    @coreutils@/bin/ls "$fetchtmp/headerses" |
-    @coreutils@/bin/sort -n |
-    while read h; do
-        @awk@/bin/awk '
-            NR == 1 {
-                match($0, /^HTTP\/[0-9\.]+ +([0-9]+) /, a)
-                status = a[1]
-            }
-            NR > 1 {
-                i = index($0, ":")
-                key = tolower(substr($0, 1, i))
-                if (key == "location:") {
-                    location = substr($0, i+1)
-                    sub(/^ */, "", location)
-                    exit
-                }
-            }
-            END {
-                if (status != "")
-                    print status, location
-            }
-            ' \
-            "$fetchtmp/headerses/$h"
-    done >"$fetchtmp/statuses"
+    "$here"/statloc "$target/headers" >"$fetchtmp"/statuses
     statuscodes=$(@coreutils@/bin/cut -f1 -d' ' "$fetchtmp/statuses")
     if ! @grep@/bin/grep -q '^\(3.. \)*2..$' <<< $statuscodes; then
         echo "$me: bad status codes for $url: $statuscodes" >&2

@@ -1,0 +1,49 @@
+#!@bash@/bin/bash
+set -euo pipefail
+me=$(@coreutils@/bin/basename "${BASH_SOURCE[0]}")
+
+cleanup() {
+    if [ -v tmp ]; then rm -rf "$tmp"; fi
+}
+trap cleanup EXIT
+tmp=$(mktemp --tmpdir --directory "$me".XXXXXXXX)
+
+case $# in
+    0)  @coreutils@/bin/cat
+        ;;
+    1)  @coreutils@/bin/cat "$1"
+        ;;
+    *)  echo "usage: $me [FILE]" >&2
+        exit 2
+        ;;
+esac |
+@coreutils@/bin/tr -d '\r' |
+@coreutils@/bin/csplit \
+    --prefix "$tmp"/ \
+    - \
+    '/^$/+1' '{*}' \
+    >/dev/null
+@coreutils@/bin/ls "$tmp" |
+@coreutils@/bin/sort -n |
+while read h; do
+    @awk@/bin/awk '
+        NR == 1 {
+            match($0, /^HTTP\/[0-9\.]+ +([0-9]+) /, a)
+            status = a[1]
+        }
+        NR > 1 {
+            i = index($0, ":")
+            key = tolower(substr($0, 1, i))
+            if (key == "location:") {
+                location = substr($0, i+1)
+                sub(/^ */, "", location)
+                exit
+            }
+        }
+        END {
+            if (status != "")
+                print status, location
+        }
+        ' \
+        "$tmp/$h"
+done
