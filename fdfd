@@ -233,7 +233,8 @@ command_post() {
             "SELECT ?title WHERE { $rdfu dc:title ?title } LIMIT 1" |
             @jq@/bin/jq -r '.results.bindings | .[] | .title.value')
     fi
-    tweet=$(GEM_PATH="$gempath" @t@/bin/t update -- "${title:0:100} $url" |
+    while [[ "$title" == -* ]]; do title=${title#-}; done
+    tweet=$(GEM_PATH="$gempath" @t@/bin/t update "${title:0:100} $url" |
         @grep@/bin/grep -o "t delete status [[:digit:]]*" |
         @coreutils@/bin/cut -d' ' -f4)
     now=$(timestamp)
