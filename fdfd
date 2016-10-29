@@ -221,7 +221,6 @@ command_post() {
     if [ $# -ne 2 ]; then exit_usage "post DBDIR URL"; fi
     dbdir=$1
     url=$2
-    gempath=$(@coreutils@/bin/ls -d @bundler@/lib/ruby/gems/*)
     rdfu=$(echo "$url" | rdfuri)
     title=$(command_query "$dbdir" \
         "SELECT ?title WHERE { $rdfu dc:title ?title } LIMIT 1" |
@@ -234,7 +233,7 @@ command_post() {
             @jq@/bin/jq -r '.results.bindings | .[] | .title.value')
     fi
     while [[ "$title" == -* ]]; do title=${title#-}; done
-    tweet=$(GEM_PATH="$gempath" @t@/bin/t update "${title:0:100} $url" |
+    tweet=$("$here"/t update "${title:0:100} $url" |
         @grep@/bin/grep -o "t delete status [[:digit:]]*" |
         @coreutils@/bin/cut -d' ' -f4)
     now=$(timestamp)

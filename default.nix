@@ -49,6 +49,7 @@ in { awk ? nixpkgs.gawk
                  "resolve-url"
                  "spider"
                  "statloc"
+                 "t"
                  "xml2-pieces" ];
      builder = builtins.toFile "builder.sh"
        ''
